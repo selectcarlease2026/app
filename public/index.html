@@ -1,0 +1,2529 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Select Car Lease</title>
+<meta name="description" content="Uw leaseauto documenten altijd bij de hand">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Select Car Lease">
+<meta name="theme-color" content="#0a2e52">
+<link rel="manifest" href="/manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Fraunces:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+:root{
+  --orange:#f5a623;--orange-light:#fff8ec;--orange-mid:#fde8b0;--orange-dark:#c47d00;
+  --blue:#1a2f6e;--blue-mid:#1e3a8a;--blue-light:#eef2ff;
+  --accent:#f5a623;--accent-light:#fff8ec;
+  --green:#15803d;--green-light:#f0fdf4;
+  --amber:#b45309;--amber-light:#fffbeb;
+  --red:#dc2626;--red-light:#fef2f2;
+  --text:#0f172a;--muted:#64748b;--border:#e2e8f0;--bg:#f8fafc;--white:#ffffff;
+  --radius:16px;--radius-sm:10px;--shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:0 4px 6px rgba(0,0,0,0.07),0 2px 4px rgba(0,0,0,0.04);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+.screen{display:none;min-height:100vh;flex-direction:column;}
+.screen.active{display:flex;}
+
+/* SHARED */
+.back-btn{background:rgba(245,166,35,0.2);border:1px solid rgba(245,166,35,0.4);width:36px;height:36px;border-radius:10px;color:#f5a623;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-bottom:16px;}
+.scroll-body{flex:1;overflow-y:auto;}
+.form-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:5px;display:block;}
+.form-input,.form-select,.form-textarea{width:100%;padding:10px 13px;border:0.5px solid #e2e8f0;border-radius:var(--radius-sm);font-size:14px;font-family:'Outfit',sans-serif;background:var(--white);color:var(--text);outline:none;transition:border-color 0.2s;}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--orange);}
+.form-textarea{height:80px;resize:none;line-height:1.5;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.form-group{margin-bottom:10px;}
+.toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#0f172a;color:white;padding:10px 22px;border-radius:100px;font-size:13px;font-weight:500;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:9999;white-space:nowrap;letter-spacing:0.2px;}
+.toast.show{opacity:1;}
+.badge{font-size:10px;font-weight:600;padding:3px 10px;border-radius:100px;letter-spacing:0.3px;}
+.badge-ok{background:#f0fdf4;color:#15803d;}
+.badge-warn{background:#fffbeb;color:#b45309;}
+.badge-danger{background:#fef2f2;color:#dc2626;}
+
+/* ===================== BEHEERPANEEL ===================== */
+.admin-topbar{background:var(--blue);padding:48px 20px 24px;color:white;}
+.admin-topbar .logo{display:flex;align-items:center;gap:10px;margin-bottom:20px;}
+.logo-mark{width:36px;height:36px;background:#f5a623;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:white;}
+.logo span{font-size:14px;font-weight:500;}
+.admin-topbar h1{font-family:'Fraunces',serif;font-size:26px;font-weight:600;}
+.admin-topbar p{font-size:13px;opacity:0.65;margin-top:4px;}
+.admin-body{padding:16px;}
+.admin-add-btn{width:100%;padding:14px;background:var(--blue);color:white;border:none;border-radius:var(--radius);font-size:14px;font-weight:500;cursor:pointer;font-family:'Outfit',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;}
+.section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:10px;}
+.car-list{display:flex;flex-direction:column;gap:10px;}
+.car-card{background:var(--white);border:0.5px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:box-shadow 0.15s;}
+.car-card:hover{box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+.car-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.car-plate{font-size:17px;font-weight:600;letter-spacing:1px;color:#0f172a;}
+.car-model{font-size:12px;color:var(--muted);}
+.car-card-actions{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap;}
+.btn-sm{padding:7px 12px;font-size:12px;font-weight:500;border-radius:var(--radius-sm);cursor:pointer;font-family:'Outfit',sans-serif;border:0.5px solid var(--border);background:var(--white);color:var(--text);display:flex;align-items:center;gap:5px;}
+.btn-sm.primary{background:#0d1f4e;color:white;border-color:#0d1f4e;}
+.btn-sm.danger{background:#fef2f2;color:#dc2626;border-color:#fecaca;}
+.qr-preview{width:80px;height:80px;border:1px solid var(--border);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;background:white;}
+.car-card-body{display:flex;gap:12px;align-items:flex-start;}
+.car-card-info{flex:1;}
+
+/* ===================== AUTO BEWERKEN ===================== */
+.edit-header{background:#f1f5f9;color:#0f172a;padding:48px 20px 20px;border-bottom:3px solid var(--orange);}
+.edit-header h1{font-size:18px;font-weight:500;margin-top:4px;color:#0f172a;}
+.edit-body{padding:16px;}
+.edit-section{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;}
+.edit-section-title{font-size:12px;font-weight:600;color:var(--orange);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.upload-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:20px 16px;text-align:center;cursor:pointer;background:var(--bg);transition:border-color 0.2s;position:relative;}
+.upload-zone:hover{border-color:var(--blue);}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-zone .uz-icon{font-size:28px;display:block;margin-bottom:6px;}
+.upload-zone p{font-size:13px;color:var(--muted);}
+.upload-zone span{font-size:11px;color:var(--muted);}
+.upload-preview{margin-top:10px;display:none;}
+.upload-preview-inner{background:var(--green-light);border:1px solid #b2dfc0;border-radius:var(--radius-sm);padding:10px 14px;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--green);}
+.save-btn{width:100%;padding:14px;background:#0d1f4e;color:white;border:none;border-radius:var(--radius);font-size:14px;font-weight:500;cursor:pointer;font-family:'Outfit',sans-serif;margin-top:4px;}
+.delete-btn{width:100%;padding:12px;background:transparent;color:var(--accent);border:1px solid #f8c9c7;border-radius:var(--radius);font-size:13px;cursor:pointer;font-family:'Outfit',sans-serif;margin-top:8px;}
+
+/* ===================== QR MODAL ===================== */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:1000;padding:24px;}
+.modal-overlay.active{display:flex;}
+.modal{background:var(--white);border-radius:var(--radius);padding:24px;width:100%;max-width:320px;text-align:center;}
+.modal h2{font-size:20px;font-weight:600;margin-bottom:4px;color:#0f172a;}
+.modal p{font-size:13px;color:var(--muted);margin-bottom:16px;}
+.modal canvas{border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:16px;}
+.modal-btns{display:flex;flex-direction:column;gap:8px;}
+.modal-btn{width:100%;padding:12px;border-radius:var(--radius-sm);font-size:14px;font-weight:500;cursor:pointer;font-family:'Outfit',sans-serif;border:none;}
+.modal-btn.primary{background:#0d1f4e;color:white;}
+.modal-btn.secondary{background:var(--bg);color:var(--text);border:1px solid var(--border);}
+
+/* ===================== KLANT APP ===================== */
+.app-header{background:#f1f5f9;padding:52px 20px 0;color:#0f172a;position:relative;overflow:hidden;}
+
+.scl-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px;position:relative;}
+.scl-logo-mark{width:32px;height:32px;background:var(--orange);border-radius:9px;display:flex;align-items:center;justify-content:center;color:white;}
+.scl-logo-mark i{font-size:17px;}
+.scl-logo span{font-size:13px;font-weight:500;color:#64748b;letter-spacing:0.2px;}
+.app-hero{position:relative;padding-bottom:28px;}
+.app-welcome{font-size:12px;color:#64748b;margin-bottom:6px;font-weight:400;letter-spacing:0.3px;text-transform:uppercase;}
+.app-plate{font-family:'Fraunces',serif;font-size:36px;font-weight:600;letter-spacing:5px;margin-bottom:4px;line-height:1;color:#0f172a;}
+.app-model{font-size:13px;color:#64748b;margin-bottom:20px;font-weight:300;}
+.app-status{display:inline-flex;align-items:center;gap:7px;background:#e2e8f0;border:1px solid #cbd5e1;padding:6px 14px;border-radius:100px;font-size:11px;font-weight:400;letter-spacing:0.2px;color:#0f172a;}
+.status-dot{width:6px;height:6px;border-radius:50%;background:#4ade80;}
+
+.app-body{padding:20px 16px 8px;background:var(--bg);}
+.app-section-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:10px;margin-top:24px;}
+.app-section-title:first-child{margin-top:0;}
+.doc-list{display:flex;flex-direction:column;gap:8px;margin-bottom:4px;}
+.doc-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:15px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:background 0.15s;}
+.doc-card:active{background:#f8fafc;}
+.doc-icon{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.doc-icon i{font-size:20px;}
+.doc-info{flex:1;}
+.doc-name{font-size:14px;font-weight:500;margin-bottom:2px;color:var(--text);}
+.doc-sub{font-size:12px;color:var(--muted);}
+.action-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.action-btn{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:16px 14px;cursor:pointer;text-align:left;transition:background 0.15s;display:flex;flex-direction:column;gap:4px;}
+.action-btn:active{background:#f8fafc;}
+.action-btn.danger{border-left:3px solid var(--orange);background:var(--white);}
+.action-icon{font-size:22px;margin-bottom:6px;display:block;}
+.action-icon i{font-size:22px;}
+.action-label{font-size:13px;font-weight:500;display:block;color:var(--text);}
+.action-sub{font-size:11px;color:var(--muted);display:block;}
+.info-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);font-size:13px;}
+.info-row:last-child{border-bottom:none;}
+.info-row .lbl{color:var(--muted);font-weight:400;}
+.info-row .val{font-weight:500;color:var(--text);}
+.footer-bar{padding:20px 20px 40px;text-align:center;border-top:1px solid var(--border);margin-top:24px;background:var(--white);}
+.footer-bar a{color:var(--orange);font-weight:500;font-size:14px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;margin-bottom:6px;}
+.footer-bar p{font-size:11px;color:var(--muted);line-height:1.6;}
+
+/* DOC VIEWER */
+.doc-header{background:#0d1f4e;color:white;padding:48px 20px 18px;display:flex;align-items:center;gap:14px;}
+.doc-header h1{font-size:18px;font-weight:500;}
+.doc-viewer-body{padding:16px;}
+.doc-file-viewer{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:14px;min-height:300px;display:flex;align-items:center;justify-content:center;}
+.doc-file-viewer img{width:100%;height:auto;display:block;}
+.doc-file-viewer iframe{width:100%;height:60vh;border:none;}
+.doc-no-file{padding:40px 20px;text-align:center;color:var(--muted);}
+.doc-no-file span{font-size:40px;display:block;margin-bottom:10px;}
+.doc-no-file p{font-size:13px;}
+.detail-fields{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.detail-field{background:var(--white);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;display:flex;justify-content:space-between;font-size:12px;}
+.detail-field .lbl{color:var(--muted);}
+.detail-field .val{font-weight:500;}
+
+/* SCHADE */
+.schade-header-bar{background:#0d1f4e;color:white;padding:48px 20px 18px;display:flex;align-items:center;gap:14px;}
+.schade-header-bar h1{font-size:18px;font-weight:500;}
+.schade-header-bar p{font-size:12px;opacity:0.75;margin-top:2px;}
+.schade-body{padding:16px;}
+.schade-section{background:var(--white);border:0.5px solid var(--border);border-radius:var(--radius);padding:15px;margin-bottom:10px;}
+.schade-section-title{font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;padding-bottom:8px;border-bottom:0.5px solid var(--border);}
+.type-select{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;}
+.type-opt{border:0.5px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:all 0.15s;background:var(--white);display:flex;align-items:center;gap:14px;text-align:left;}
+.type-opt.selected{border-left:3px solid var(--orange);border-radius:0 var(--radius) var(--radius) 0;background:var(--white);}
+.type-opt-icon{font-size:24px;flex-shrink:0;}
+.type-opt-label{font-size:13px;font-weight:500;color:#0f172a;margin-bottom:2px;}
+.type-opt-sub{font-size:11px;color:#64748b;}
+.photo-zone{border:1px dashed #cbd5e1;border-radius:var(--radius);padding:20px 16px;text-align:center;cursor:pointer;background:#f8fafc;position:relative;}
+.photo-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.photo-zone p{font-size:13px;color:var(--muted);margin-top:6px;}
+.photo-zone span{font-size:11px;color:var(--muted);}
+.photo-preview{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+.photo-thumb{width:64px;height:64px;border-radius:8px;object-fit:cover;border:1px solid var(--border);}
+.submit-btn{width:100%;padding:14px;background:var(--orange);color:white;border:none;border-radius:var(--radius);font-size:14px;font-weight:500;cursor:pointer;font-family:'Outfit',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;letter-spacing:0.2px;}
+.submit-btn:disabled{opacity:0.6;cursor:not-allowed;}
+.warn-box{background:#fffbeb;border:0.5px solid #fcd34d;border-radius:var(--radius);padding:12px 14px;margin-bottom:10px;font-size:12px;color:#92400e;line-height:1.6;}
+
+/* ONDERHOUD */
+.onderhoud-block{background:var(--white);border:0.5px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:8px;}
+.onderhoud-block h3{font-size:14px;font-weight:500;margin-bottom:6px;color:#0f172a;}
+.onderhoud-block p{font-size:13px;color:#64748b;line-height:1.65;}
+.onderhoud-block ul{padding-left:18px;margin-top:6px;}
+.onderhoud-block ul li{font-size:13px;color:var(--muted);line-height:1.8;}
+.call-btn{width:100%;padding:13px;background:var(--orange);color:white;border:none;border-radius:var(--radius);font-size:14px;font-weight:500;cursor:pointer;font-family:'Outfit',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;}
+
+/* WARNING BARS */
+.warn-bar{display:none;padding:12px 16px;gap:10px;align-items:flex-start;}
+.warn-bar.show{display:flex;}
+.warn-bar.contract{background:#fffbeb;border-bottom:2px solid #fcd34d;}
+.warn-bar.apk{background:#fff7ed;border-bottom:2px solid #fed7aa;}
+.warn-bar-icon{font-size:18px;flex-shrink:0;margin-top:2px;}
+.warn-bar-text strong{display:block;font-size:13px;font-weight:600;color:#92400e;margin-bottom:2px;}
+.warn-bar.apk .warn-bar-text strong{color:#9a3412;}
+.warn-bar-text span{font-size:12px;color:#78350f;line-height:1.5;}
+.warn-bar.apk .warn-bar-text span{color:#7c2d12;}
+
+/* INSTALL BANNER */
+.install-banner{background:#0d1f4e;color:white;padding:12px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,0.08);}
+.install-banner .install-icon{width:42px;height:42px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.install-banner .install-text{flex:1;}
+.install-banner .install-text strong{display:block;font-size:13px;font-weight:600;}
+.install-banner .install-text span{font-size:11px;opacity:0.75;}
+.install-banner .install-btn{background:#f5a623;color:white;border:none;padding:7px 14px;border-radius:100px;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;flex-shrink:0;letter-spacing:0.2px;}
+.install-banner .install-close{background:none;border:none;color:white;font-size:18px;cursor:pointer;opacity:0.6;padding:4px;margin-left:4px;flex-shrink:0;}
+
+/* SUCCESS */
+.success-page{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 24px;text-align:center;background:#f8fafc;}
+.success-page.active{display:flex;}
+.success-icon{font-size:60px;margin-bottom:16px;}
+.success-page h2{font-size:22px;font-weight:500;margin-bottom:10px;color:#0f172a;}
+.success-page p{font-size:13px;color:#64748b;line-height:1.7;max-width:280px;}
+.success-back{margin-top:24px;padding:12px 28px;background:#0d1f4e;color:white;border:none;border-radius:100px;font-size:13px;font-weight:500;cursor:pointer;font-family:'Outfit',sans-serif;letter-spacing:0.2px;}
+</style>
+</head>
+<body>
+<div id="toast" class="toast"></div>
+
+<!-- ============ LOGIN ============ -->
+<div id="screen-klant-login" class="screen active" style="display:flex;background:#f1f5f9;justify-content:center;align-items:center;min-height:100vh;">
+  <div style="width:100%;max-width:340px;padding:24px;">
+    <div style="text-align:center;margin-bottom:28px;">
+      <img src="/images/logo.png" alt="Select Car Lease" style="height:40px;width:auto;margin-bottom:16px;"><br>
+      <strong style="font-size:18px;color:#0f172a;">Select Car Lease</strong><br>
+      <span style="font-size:13px;color:#64748b;">Log in om verder te gaan</span>
+    </div>
+    <div style="background:white;border:0.5px solid #e2e8f0;border-radius:16px;padding:24px;">
+      <div style="margin-bottom:12px;">
+        <label style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:6px;">Gebruikersnaam of e-mailadres</label>
+        <input type="text" id="login-input" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('login-pw').focus()" style="width:100%;padding:11px 13px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:Outfit,sans-serif;outline:none;box-sizing:border-box;" placeholder="Naam of e-mailadres">
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:6px;">Wachtwoord</label>
+        <div style="position:relative;">
+          <input type="password" id="login-pw" autocomplete="current-password" onkeydown="if(event.key==='Enter')doSlimLogin()" style="width:100%;padding:11px 44px 11px 13px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:Outfit,sans-serif;outline:none;box-sizing:border-box;" placeholder="Wachtwoord">
+          <button type="button" onclick="var i=document.getElementById('login-pw');if(i.type==='password'){i.type='text';this.textContent='🙈';}else{i.type='password';this.textContent='👁';}" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px;">👁</button>
+        </div>
+      </div>
+      <div id="login-error" style="display:none;background:#fef2f2;color:#dc2626;font-size:12px;padding:10px;border-radius:8px;margin-bottom:12px;"></div>
+      <button type="button" onclick="doSlimLogin()" id="login-btn" style="width:100%;padding:13px;background:#0d1f4e;color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:Outfit,sans-serif;">Inloggen</button>
+      <button type="button" onclick="showScreen('screen-klant-reset')" style="width:100%;padding:10px;background:none;color:#64748b;border:none;font-size:12px;cursor:pointer;font-family:Outfit,sans-serif;margin-top:6px;">Wachtwoord vergeten?</button>
+    </div>
+    <div style="margin-top:14px;background:white;border:0.5px solid #e2e8f0;border-radius:12px;padding:12px;text-align:center;">
+      <p style="font-size:12px;color:#64748b;margin-bottom:8px;">Kies uw taal / Choose language</p>
+      <div style="display:flex;gap:8px;justify-content:center;">
+        <button onclick="setLang('nl')" style="padding:6px 16px;background:#0d1f4e;color:white;border:none;border-radius:8px;font-size:18px;cursor:pointer;">🇳🇱</button>
+        <button onclick="setLang('en')" style="padding:6px 16px;background:white;color:#0d1f4e;border:1px solid #e2e8f0;border-radius:8px;font-size:18px;cursor:pointer;">🇬🇧</button>
+        <button onclick="setLang('it')" style="padding:6px 16px;background:white;color:#0d1f4e;border:1px solid #e2e8f0;border-radius:8px;font-size:18px;cursor:pointer;">🇮🇹</button>
+      </div>
+    </div>
+    <p style="text-align:center;font-size:11px;color:#94a3b8;margin-top:14px;">Select Car Lease · Woerden</p>
+  </div>
+</div>
+
+<!-- ============ WACHTWOORD RESET ============ -->
+<div id="screen-klant-reset" class="screen" style="display:none;background:#f1f5f9;justify-content:center;align-items:center;min-height:100vh;">
+  <div style="width:100%;max-width:340px;padding:24px;">
+    <div style="text-align:center;margin-bottom:28px;">
+      <img src="/images/logo.png" alt="Select Car Lease" style="height:36px;width:auto;margin-bottom:16px;"><br>
+      <strong style="font-size:18px;color:#0f172a;">Wachtwoord vergeten</strong><br>
+      <span style="font-size:13px;color:#64748b;">Voer uw e-mailadres in</span>
+    </div>
+    <div style="background:white;border:0.5px solid #e2e8f0;border-radius:16px;padding:24px;">
+      <div style="margin-bottom:16px;">
+        <label style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:6px;">E-mailadres</label>
+        <input type="email" id="reset-email-inp" style="width:100%;padding:11px 13px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:Outfit,sans-serif;outline:none;box-sizing:border-box;" placeholder="uw@email.nl">
+      </div>
+      <div id="reset-msg" style="display:none;font-size:12px;margin-bottom:12px;padding:10px;border-radius:8px;"></div>
+      <button type="button" onclick="resetWachtwoord()" style="width:100%;padding:12px;background:#0d1f4e;color:white;border:none;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;">Reset link sturen</button>
+      <button type="button" onclick="showScreen('screen-klant-login')" style="width:100%;padding:10px;background:none;color:#64748b;border:none;font-size:12px;cursor:pointer;font-family:Outfit,sans-serif;margin-top:8px;">← Terug naar inloggen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ LOGIN SCREEN ============ -->
+<div id="screen-login" class="screen" style="display:flex;background:#f1f5f9;justify-content:center;align-items:center;min-height:100vh;">
+  <div style="width:100%;max-width:320px;padding:24px;">
+    <div style="text-align:center;margin-bottom:32px;">
+      <img src="/images/logo.png" alt="Select Car Lease" style="height:36px;width:auto;margin-bottom:20px;"><br>
+      <strong style="font-size:18px;color:#0f172a;">Beheerpaneel</strong><br>
+      <span style="font-size:13px;color:#64748b;">Voer uw gegevens in</span>
+    </div>
+    <div style="background:white;border:0.5px solid #e2e8f0;border-radius:16px;padding:24px;">
+      <div style="margin-bottom:12px;">
+        <label style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:6px;">Gebruikersnaam</label>
+        <input type="text" id="login-user" onkeydown="if(event.key==='Enter')document.getElementById('login-pw').focus()" style="width:100%;padding:11px 13px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:Outfit,sans-serif;outline:none;box-sizing:border-box;" placeholder="Bijv. Denny">
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:6px;">Wachtwoord</label>
+        <div style="position:relative;">
+          <input type="password" id="login-pw" onkeydown="if(event.key==='Enter')doLogin()" style="width:100%;padding:11px 44px 11px 13px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:Outfit,sans-serif;outline:none;box-sizing:border-box;" placeholder="Wachtwoord">
+          <button type="button" id="pw-eye" onclick="togglePwVisibility()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:4px;">👁</button>
+        </div>
+      </div>
+      <div id="login-error" style="display:none;color:#dc2626;font-size:12px;margin-bottom:12px;">Onjuiste gebruikersnaam of wachtwoord.</div>
+      <button type="button" id="old-login-btn" onclick="doLogin()" style="width:100%;padding:12px;background:#0d1f4e;color:white;border:none;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;">Inloggen</button>
+    </div>
+    <p style="text-align:center;font-size:11px;color:#94a3b8;margin-top:16px;">Select Car Lease · Woerden</p>
+  </div>
+</div>
+
+<!-- ============ TAAL KEUZE ============ -->
+<div id="screen-lang" class="screen" style="display:none;background:#f1f5f9;justify-content:center;align-items:center;min-height:100vh;">
+  <div style="width:100%;max-width:320px;padding:24px;text-align:center;">
+    <img src="/images/logo.png" alt="Select Car Lease" style="height:32px;width:auto;margin-bottom:32px;">
+    <h2 style="font-size:18px;font-weight:600;color:#0f172a;margin-bottom:6px;">Kies uw taal</h2>
+    <p style="font-size:13px;color:#64748b;margin-bottom:24px;">Choose your language · Scegli la lingua</p>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button onclick="setLang('nl')" style="width:100%;padding:14px;background:#0d1f4e;color:white;border:none;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;display:flex;align-items:center;justify-content:center;gap:10px;">
+        🇳🇱 Nederlands
+      </button>
+      <button onclick="setLang('en')" style="width:100%;padding:14px;background:white;color:#0d1f4e;border:1px solid #e2e8f0;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;display:flex;align-items:center;justify-content:center;gap:10px;">
+        🇬🇧 English
+      </button>
+      <button onclick="setLang('it')" style="width:100%;padding:14px;background:white;color:#0d1f4e;border:1px solid #e2e8f0;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;display:flex;align-items:center;justify-content:center;gap:10px;">
+        🇮🇹 Italiano
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ BEHEERPANEEL ============ -->
+<div id="screen-admin" class="screen" style="display:none;">
+  <div style="background:#f1f5f9;padding:48px 20px 20px;border-bottom:3px solid #f5a623;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <img src="/images/logo.png" alt="Select Car Lease" style="height:28px;width:auto;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span id="admin-username" style="font-size:12px;color:#64748b;"></span>
+        <button onclick="adminLogout()" style="background:none;border:0.5px solid #e2e8f0;border-radius:8px;padding:6px 12px;font-size:12px;color:#64748b;cursor:pointer;font-family:Outfit,sans-serif;">Uitloggen</button>
+      </div>
+    </div>
+    <h1 style="font-size:22px;font-weight:600;color:#0f172a;">Mijn wagenpark</h1>
+    <p style="font-size:13px;color:#64748b;margin-top:4px;">Beheer voertuigen en klanten</p>
+  </div>
+  <!-- TABS -->
+  <div style="display:flex;border-bottom:1px solid #e2e8f0;background:#fff;padding:0 16px;">
+    <button onclick="showTab('tab-cars')" id="btn-tab-cars" style="padding:12px 16px;font-size:13px;font-weight:500;border:none;background:none;cursor:pointer;font-family:Outfit,sans-serif;color:#0d1f4e;border-bottom:2px solid #0d1f4e;">🚗 Wagenpark</button>
+    <button onclick="showTab('tab-apk')" id="btn-tab-apk" style="padding:12px 16px;font-size:13px;font-weight:500;border:none;background:none;cursor:pointer;font-family:Outfit,sans-serif;color:#64748b;border-bottom:2px solid transparent;">🔧 APK overzicht</button>
+    <button onclick="showTab('tab-schade')" id="btn-tab-schade" style="padding:12px 16px;font-size:13px;font-weight:500;border:none;background:none;cursor:pointer;font-family:Outfit,sans-serif;color:#64748b;border-bottom:2px solid transparent;">🚨 Schademeldingen</button>
+    <button onclick="showTab('tab-garages')" id="btn-tab-garages" style="padding:12px 16px;font-size:13px;font-weight:500;border:none;background:none;cursor:pointer;font-family:Outfit,sans-serif;color:#64748b;border-bottom:2px solid transparent;">🔧 Garages</button>
+  </div>
+
+  <div class="scroll-body">
+
+    <!-- TAB WAGENPARK -->
+    <div id="tab-cars" class="admin-body">
+      <button class="admin-add-btn" onclick="newCar()">➕ Nieuwe auto toevoegen</button>
+      <div class="section-title">Voertuigen (<span id="car-count">0</span>)</div>
+      <div class="car-list" id="car-list"></div>
+      <div id="no-cars" style="text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;display:none;">
+        <div style="font-size:40px;margin-bottom:10px">🚗</div>
+        <p>Nog geen voertuigen toegevoegd.<br>Klik op "Nieuwe auto toevoegen".</p>
+      </div>
+    </div>
+
+    <!-- TAB APK -->
+    <div id="tab-apk" class="admin-body" style="display:none;">
+      <div class="section-title">APK vervaldatums — komende 90 dagen (intern overzicht)</div>
+      <div id="apk-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+      <div id="apk-empty" style="text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;display:none;">
+        <div style="font-size:40px;margin-bottom:10px">✅</div>
+        <p>Geen APK's die binnen 90 dagen verlopen.</p>
+      </div>
+    </div>
+
+    <!-- TAB SCHADE -->
+    <div id="tab-schade" class="admin-body" style="display:none;">
+      <div class="section-title">Schademeldingen</div>
+      <div style="background:#e8f0f9;border:0.5px solid #b5d4f4;border-radius:var(--radius);padding:14px;margin-bottom:12px;font-size:13px;color:#0d1f4e;line-height:1.6;">
+        <i class="ti ti-info-circle" style="font-size:14px;margin-right:5px" aria-hidden="true"></i>
+        Schademeldingen worden verstuurd naar <strong>schade@selectcarlease.nl</strong>. Hieronder zie je alle meldingen die via de app zijn ingediend en opgeslagen.
+      </div>
+      <div id="schade-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+      <div id="schade-empty" style="text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;display:none;">
+        <div style="font-size:40px;margin-bottom:10px">🚨</div>
+        <p>Nog geen schademeldingen ontvangen.</p>
+      </div>
+    </div>
+
+    <!-- TAB GARAGES -->
+    <div id="tab-garages" class="admin-body" style="display:none;">
+      <div class="section-title">Samenwerkende garages</div>
+      <button class="admin-add-btn" onclick="showAddGarage()">➕ Garage toevoegen</button>
+      <div id="garage-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+      <div id="garage-empty" style="text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;">
+        <div style="font-size:40px;margin-bottom:10px">🔧</div>
+        <p>Nog geen garages toegevoegd.</p>
+      </div>
+    </div>
+
+    <!-- GARAGE FORMULIER -->
+    <div id="tab-garage-form" class="admin-body" style="display:none;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <button onclick="showTab('tab-garages')" style="background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.3);border-radius:8px;padding:6px 14px;font-size:13px;color:#f5a623;cursor:pointer;font-family:Outfit,sans-serif;font-weight:500;">← Terug</button>
+        <span style="font-size:15px;font-weight:500;color:#0f172a;" id="garage-form-title">Garage toevoegen</span>
+      </div>
+      <div class="edit-section">
+        <div class="edit-section-title">Garagegegevens</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div><label class="form-label">Naam garage</label><input class="form-input" id="g-naam" placeholder="Bijv. Garage Jansen"></div>
+          <div><label class="form-label">Straat & huisnummer</label><input class="form-input" id="g-straat" placeholder="Hoofdstraat 1"></div>
+          <div class="form-row">
+            <div><label class="form-label">Postcode</label><input class="form-input" id="g-postcode" placeholder="1234AB" style="text-transform:uppercase"></div>
+            <div><label class="form-label">Stad</label><input class="form-input" id="g-stad" placeholder="Amsterdam"></div>
+          </div>
+          <div class="form-row">
+            <div><label class="form-label">Telefoon</label><input class="form-input" id="g-tel" type="tel" placeholder="010-1234567"></div>
+            <div><label class="form-label">Merk / specialisatie</label><input class="form-input" id="g-merk" placeholder="Bijv. Alle merken"></div>
+          </div>
+        </div>
+      </div>
+      <button class="save-btn" onclick="saveGarage()">💾 Garage opslaan</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ AUTO TOEVOEGEN / BEWERKEN ============ -->
+<div id="screen-edit" class="screen">
+  <div class="edit-header">
+    <button class="back-btn" onclick="showScreen('screen-admin')">←</button>
+    <h1 id="edit-title">Nieuwe auto</h1>
+  </div>
+  <div class="scroll-body">
+    <div class="edit-body">
+      <!-- STAP 1: VOERTUIG -->
+      <div id="edit-step-1">
+      <div style="background:#eff6ff;border:0.5px solid #bfdbfe;border-radius:10px;padding:12px;margin-bottom:12px;font-size:12px;color:#1e40af;">
+        <strong>Stap 1 van 4 — Voertuiggegevens</strong><br>
+        Voer het kenteken in en klik op 🔍 RDW om gegevens automatisch in te vullen.
+      </div>
+      <div class="edit-section">
+        <div class="edit-section-title">Voertuiggegevens</div>
+        <div class="form-group">
+          <label class="form-label">Kenteken</label>
+          <div style="display:flex;gap:8px;">
+            <input class="form-input" id="e-plate" placeholder="AB-123-C" style="text-transform:uppercase;flex:1;" oninput="this.value=this.value.toUpperCase()">
+            <button type="button" onclick="rdwLookup()" id="rdw-btn" style="padding:10px 14px;background:#0d1f4e;color:white;border:none;border-radius:var(--radius-sm);font-size:12px;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;white-space:nowrap;flex-shrink:0;">
+              🔍 RDW
+            </button>
+          </div>
+          <div id="rdw-status" style="font-size:11px;margin-top:5px;display:none;"></div>
+        </div>
+        <div class="form-group form-row">
+          <div><label class="form-label">Merk & model</label><input class="form-input" id="e-model" placeholder="Volkswagen Golf"></div>
+          <div><label class="form-label">Bouwjaar</label><input class="form-input" id="e-year" type="number" placeholder="2022"></div>
+        </div>
+        <div class="form-group form-row">
+          <div><label class="form-label">Kleur</label><input class="form-input" id="e-color" placeholder="Zilver"></div>
+          <div><label class="form-label">Brandstof</label>
+            <select class="form-select" id="e-fuel"><option>Benzine</option><option>Diesel</option><option>Elektrisch</option><option>Hybride</option></select>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">Naam klant</label><input class="form-input" id="e-klant" placeholder="Bijv. Jan de Boer"></div>
+        <div class="form-group form-row">
+          <div><label class="form-label">E-mail klant</label><input class="form-input" id="e-klant-email" type="email" placeholder="naam@mail.nl"></div>
+          <div><label class="form-label">Telefoon klant</label><input class="form-input" id="e-klant-tel" type="tel" placeholder="06-..."></div>
+        </div>
+        <div class="form-group"><label class="form-label">Accountmanager</label>
+          <select class="form-select" id="e-manager">
+            <option value="">Geen accountmanager</option>
+            <option value="Mandy|0612475841">Mandy</option>
+            <option value="Mohamed|0613907858">Mohamed</option>
+            <option value="Giel|">Giel</option>
+            <option value="Denny|0613554717">Denny</option>
+          </select>
+        </div>
+        <div class="form-group form-row">
+          <div><label class="form-label">Contract einddatum</label><input class="form-input" id="e-contract" type="date"></div>
+          <div><label class="form-label">APK geldig tot</label><input class="form-input" id="e-apk" type="date"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-select" id="e-active">
+            <option value="1">✅ Actief — klant heeft toegang</option>
+            <option value="uitgifte">📋 Klaar voor uitgifte — wacht op rapport</option>
+            <option value="inname">🔄 Klaar voor inname — auto retour</option>
+            <option value="0">🔒 Geblokkeerd — auto ingeleverd</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="edit-section">
+        <div class="edit-section-title">Verzekering (groene kaart)</div>
+        <div class="form-group"><label class="form-label">Verzekeraar</label><input class="form-input" id="e-insurer" value="Loxo / Meijers Assurantiën" placeholder="Verzekeraar"></div>
+        <div class="form-group form-row">
+          <div><label class="form-label">Polisnummer</label><input class="form-input" id="e-policy" value="ZWAKA/6C4E8EW" placeholder="Polisnummer"></div>
+          <div><label class="form-label">Dekking</label><input class="form-input" id="e-cover" placeholder="WA + Casco"></div>
+        </div>
+        <div class="form-group form-row">
+          <div><label class="form-label">Geldig van</label><input class="form-input" id="e-ins-from" type="date"></div>
+          <div><label class="form-label">Geldig tot</label><input class="form-input" id="e-ins-to" type="date"></div>
+        </div>
+      </div>
+
+      <div class="edit-section">
+        <div class="edit-section-title">📄 Groene kaart uploaden</div>
+        <div class="upload-zone" id="uz-groene">
+          <input type="file" id="u-groene" accept="image/*,.pdf" onchange="handleUpload('groene',this)">
+          <span class="uz-icon">🛡️</span>
+          <p>Tik om groene kaart te uploaden</p>
+          <span>PDF of afbeelding</span>
+        </div>
+        <div class="upload-preview" id="up-groene">
+          <div class="upload-preview-inner">✅ <span id="up-groene-name">bestand.pdf</span> — geüpload</div>
+        </div>
+      </div>
+
+      <div class="edit-section">
+        <div class="edit-section-title">🪪 Kentekenkaart uploaden</div>
+        <div class="upload-zone" id="uz-kenteken">
+          <input type="file" id="u-kenteken" accept="image/*,.pdf" onchange="handleUpload('kenteken',this)">
+          <span class="uz-icon">🪪</span>
+          <p>Tik om kentekenkaart te uploaden</p>
+          <span>PDF of afbeelding</span>
+        </div>
+        <div class="upload-preview" id="up-kenteken">
+          <div class="upload-preview-inner">✅ <span id="up-kenteken-name">bestand.pdf</span> — geüpload</div>
+        </div>
+      </div>
+
+      </div> <!-- end step 4 -->
+
+      <button class="save-btn" onclick="saveCar()">💾 Auto opslaan & uitnodiging versturen</button>
+      <button class="delete-btn" id="delete-btn" onclick="deleteCar()" style="display:none">🗑 Verwijder dit voertuig</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ UITGIFTE RAPPORT ============ -->
+<div id="screen-uitgifte" class="screen" style="display:none;">
+  <div style="background:#f1f5f9;padding:48px 20px 20px;border-bottom:3px solid #15803d;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <button onclick="sessionStorage.getItem('scl_user')==='uitgifte' ? (renderUitgiftePortal(), showScreen('screen-uitgifte-portal')) : showScreen('screen-admin')" style="background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.3);width:36px;height:36px;border-radius:10px;color:#f5a623;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">←</button>
+      <div>
+        <div style="font-size:18px;font-weight:600;color:#0f172a;">Uitgifte rapport</div>
+        <div style="font-size:12px;color:#64748b;" id="uitgifte-subtitle">Voertuig uitgifte</div>
+      </div>
+    </div>
+  </div>
+  <div style="flex:1;overflow-y:auto;">
+    <div style="padding:16px;">
+
+      <!-- Auto info -->
+      <!-- STAP 1: VOERTUIG -->
+      <div id="edit-step-1">
+      <div style="background:#eff6ff;border:0.5px solid #bfdbfe;border-radius:10px;padding:12px;margin-bottom:12px;font-size:12px;color:#1e40af;">
+        <strong>Stap 1 van 4 — Voertuiggegevens</strong><br>
+        Voer het kenteken in en klik op 🔍 RDW om gegevens automatisch in te vullen.
+      </div>
+      <div class="edit-section">
+        <div class="edit-section-title">Voertuiggegevens</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div class="form-row">
+            <div><label class="form-label">Kenteken</label><input class="form-input" id="u-kenteken" readonly style="background:#f8fafc;"></div>
+            <div><label class="form-label">Datum uitgifte</label><input class="form-input" id="u-datum" type="date"></div>
+          </div>
+          <div><label class="form-label">Merk & model</label><input class="form-input" id="u-model" readonly style="background:#f8fafc;"></div>
+          <div><label class="form-label">Naam klant</label><input class="form-input" id="u-klant" readonly style="background:#f8fafc;"></div>
+          <div class="form-row">
+            <div><label class="form-label">Kilometerstand</label><input class="form-input" id="u-km" type="number" placeholder="bijv. 45000"></div>
+            <div><label class="form-label">Brandstofstand</label>
+              <select class="form-select" id="u-brandstof">
+                <option value="vol">Vol</option>
+                <option value="3/4">3/4</option>
+                <option value="1/2">1/2</option>
+                <option value="1/4">1/4</option>
+                <option value="leeg">Bijna leeg</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Aanwezig -->
+      <div class="edit-section">
+        <div class="edit-section-title">Staat van de auto bij uitgifte</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div class="form-row">
+            <div><label class="form-label">Schoon van buiten</label>
+              <select class="form-select" id="u-schoon-buiten">
+                <option value="ja">Ja</option>
+                <option value="nee">Nee</option>
+              </select>
+            </div>
+            <div><label class="form-label">Schoon van binnen</label>
+              <select class="form-select" id="u-schoon-binnen">
+                <option value="ja">Ja</option>
+                <option value="nee">Nee</option>
+                <option value="vervuild">Vervuild</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div>
+              <label class="form-label">Reservewiel</label>
+              <select class="form-select" id="u-reservewiel">
+                <option value="ja">Ja</option>
+                <option value="nee">Nee</option>
+                <option value="noodwiel">Noodwiel</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Hoedenplank</label>
+              <select class="form-select" id="u-hoedenplank">
+                <option value="ja">Ja</option>
+                <option value="nee">Nee</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div><label class="form-label">Sleutels</label>
+              <select class="form-select" id="u-sleutels">
+                <option value="1">1 sleutel</option>
+                <option value="2">2 sleutels</option>
+                <option value="3">3 sleutels</option>
+              </select>
+            </div>
+            <div><label class="form-label">Schade aan velgen</label>
+              <select class="form-select" id="u-velgen">
+                <option value="nee">Nee</option>
+                <option value="ja">Ja</option>
+              </select>
+            </div>
+          </div>
+          <div><label class="form-label">Overige opmerkingen</label>
+            <textarea class="form-textarea" id="u-opmerkingen" placeholder="Bijv. navigatiekaart aanwezig, trekhaak etc."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Schades -->
+      <div class="edit-section">
+        <div class="edit-section-title">Bestaande schades bij uitgifte</div>
+        <div id="uitgifte-schades" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px;"></div>
+        <button onclick="addSchadeRegel('uitgifte')" style="width:100%;padding:9px;border:1px dashed #cbd5e1;border-radius:var(--radius-sm);background:#f8fafc;color:#64748b;font-size:12px;cursor:pointer;font-family:Outfit,sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;">
+          + Schade toevoegen
+        </button>
+      </div>
+
+      <!-- Foto's -->
+      <div class="edit-section">
+        <div class="edit-section-title">Foto's voertuig</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;" id="uitgifte-fotos">
+        </div>
+      </div>
+
+      <button onclick="slaUitgifteOp()" style="width:100%;padding:14px;background:#15803d;color:white;border:none;border-radius:var(--radius);font-size:14px;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:8px;">
+        <i class="ti ti-clipboard-check" style="font-size:16px"></i> Uitgifte rapport opslaan & mailen
+      </button>
+
+    </div>
+  </div>
+</div>
+
+<!-- ============ INNAME RAPPORT ============ -->
+<div id="screen-inname" class="screen" style="display:none;">
+  <div style="background:#f1f5f9;padding:48px 20px 20px;border-bottom:3px solid #dc2626;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <button onclick="showScreen('screen-admin')" style="background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.3);width:36px;height:36px;border-radius:10px;color:#f5a623;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">←</button>
+      <div>
+        <div style="font-size:18px;font-weight:600;color:#0f172a;">Inname rapport</div>
+        <div style="font-size:12px;color:#64748b;" id="inname-subtitle">Voertuig inname</div>
+      </div>
+    </div>
+  </div>
+  <div style="flex:1;overflow-y:auto;">
+    <div style="padding:16px;">
+
+      <!-- Uitgifte vergelijking -->
+      <div id="inname-uitgifte-ref" style="background:#f0fdf4;border:0.5px solid #bbf7d0;border-radius:var(--radius);padding:14px;margin-bottom:12px;font-size:12px;color:#15803d;line-height:1.6;"></div>
+
+      <!-- Inname gegevens -->
+      <div class="edit-section">
+        <div class="edit-section-title">Inname gegevens</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div class="form-row">
+            <div><label class="form-label">Kenteken</label><input class="form-input" id="i-kenteken" readonly style="background:#f8fafc;"></div>
+            <div><label class="form-label">Datum inname</label><input class="form-input" id="i-datum" type="date"></div>
+          </div>
+          <div class="form-row">
+            <div><label class="form-label">Kilometerstand</label><input class="form-input" id="i-km" type="number" placeholder="bijv. 67000"></div>
+            <div><label class="form-label">Brandstofstand</label>
+              <select class="form-select" id="i-brandstof">
+                <option value="vol">Vol</option>
+                <option value="3/4">3/4</option>
+                <option value="1/2">1/2</option>
+                <option value="1/4">1/4</option>
+                <option value="leeg">Bijna leeg</option>
+              </select>
+            </div>
+          </div>
+          <div><label class="form-label">Auto schoon?</label>
+            <select class="form-select" id="i-schoon">
+              <option value="ja">Ja, schoon ingeleverd</option>
+              <option value="nee">Nee, niet schoon</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Staat bij inname -->
+      <div class="edit-section">
+        <div class="edit-section-title">Staat van de auto bij inname</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div class="form-row">
+            <div><label class="form-label">Schoon van buiten</label>
+              <select class="form-select" id="i-schoon-buiten">
+                <option value="ja">Ja</option>
+                <option value="nee">Nee</option>
+              </select>
+            </div>
+            <div><label class="form-label">Schoon van binnen</label>
+              <select class="form-select" id="i-schoon-binnen">
+                <option value="ja">Ja</option>
+                <option value="nee">Nee</option>
+                <option value="vervuild">Vervuild</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div><label class="form-label">Geur in de auto</label>
+              <select class="form-select" id="i-geur">
+                <option value="normaal">Normaal</option>
+                <option value="rooklucht">Rooklucht</option>
+                <option value="andere geur">Andere geur</option>
+              </select>
+            </div>
+            <div><label class="form-label">Schade aan velgen</label>
+              <select class="form-select" id="i-velgen">
+                <option value="nee">Nee</option>
+                <option value="ja">Ja</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div>
+              <label class="form-label">Reservewiel</label>
+              <select class="form-select" id="i-reservewiel">
+                <option value="ja">Ja</option>
+                <option value="nee">Nee</option>
+                <option value="noodwiel">Noodwiel</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Hoedenplank</label>
+              <select class="form-select" id="i-hoedenplank">
+                <option value="ja">Ja</option>
+                <option value="nee">Nee</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div><label class="form-label">Sleutels</label>
+              <select class="form-select" id="i-sleutels">
+                <option value="1">1 sleutel</option>
+                <option value="2">2 sleutels</option>
+                <option value="3">3 sleutels</option>
+              </select>
+            </div>
+
+          </div>
+          <div><label class="form-label">Extra opmerkingen</label>
+            <textarea class="form-textarea" id="i-opmerkingen" placeholder="Bijv. krasje op velg, geur in de auto etc."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Schades bij uitgifte (readonly) -->
+      <div class="edit-section">
+        <div class="edit-section-title" style="color:#15803d;">Schades bij uitgifte (ter vergelijking)</div>
+        <div id="inname-schades-uitgifte" style="display:flex;flex-direction:column;gap:6px;"></div>
+      </div>
+
+      <!-- Nieuwe schades -->
+      <div class="edit-section">
+        <div class="edit-section-title" style="color:#dc2626;">Nieuwe schades bij inname</div>
+        <div id="inname-schades" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px;"></div>
+        <button onclick="addSchadeRegel('inname')" style="width:100%;padding:9px;border:1px dashed #cbd5e1;border-radius:var(--radius-sm);background:#f8fafc;color:#64748b;font-size:12px;cursor:pointer;font-family:Outfit,sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;">
+          + Nieuwe schade toevoegen
+        </button>
+      </div>
+
+      <!-- Foto's -->
+      <div class="edit-section">
+        <div class="edit-section-title">Foto's bij inname</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;" id="inname-fotos"></div>
+      </div>
+
+      <div style="background:#fffbeb;border:0.5px solid #fcd34d;border-radius:var(--radius);padding:12px;margin-bottom:12px;font-size:12px;color:#92400e;">
+        ⚠️ Door op te slaan bevestigt u dat het rapport correct en volledig is ingevuld.
+      </div>
+
+      <button onclick="slaInnamepOp()" style="width:100%;padding:14px;background:#dc2626;color:white;border:none;border-radius:var(--radius);font-size:14px;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;">
+        <i class="ti ti-clipboard-check" style="font-size:16px"></i> Inname rapport opslaan & mailen
+      </button>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ============ KLANT APP ============ -->
+<div id="screen-app" class="screen">
+  <div id="warn-contract" style="display:none;flex-direction:column;padding:14px 16px;background:#fffbeb;border-bottom:2px solid #fcd34d;">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;">
+      <i class="ti ti-alert-triangle" style="font-size:18px;color:#92400e;flex-shrink:0;margin-top:2px;" aria-hidden="true"></i>
+      <div>
+        <strong style="display:block;font-size:13px;font-weight:600;color:#92400e;">Leasecontract verloopt binnenkort</strong>
+        <span id="warn-contract-txt" style="font-size:12px;color:#78350f;"></span>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:7px;padding-left:28px;">
+      <button onclick="showAppScreen('screen-inleveren')" style="width:100%;padding:11px;background:#92400e;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;">
+        <i class="ti ti-calendar" style="font-size:14px" aria-hidden="true"></i> Afspraak inleveren
+      </button>
+      <button onclick="showAppScreen('screen-verlengen')" style="width:100%;padding:11px;background:#fff;color:#92400e;border:1.5px solid #f0d090;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;">
+        <i class="ti ti-refresh" style="font-size:14px" aria-hidden="true"></i> Contract verlengen
+      </button>
+    </div>
+  </div>
+  <div id="warn-apk" class="warn-bar apk" style="display:none;flex-direction:column;padding:14px 16px;background:#fff7ed;border-bottom:2px solid #fed7aa;">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;">
+      <i class="ti ti-tool" style="font-size:18px;color:#9a3412;flex-shrink:0;margin-top:2px;" aria-hidden="true"></i>
+      <div>
+        <strong style="display:block;font-size:13px;font-weight:600;color:#9a3412;">APK verloopt binnenkort</strong>
+        <span id="warn-apk-txt" style="font-size:12px;color:#7c2d12;"></span>
+      </div>
+    </div>
+    <div style="padding-left:28px;">
+      <button onclick="window.location.href='mailto:onderhoud@selectcarlease.nl?subject=APK%20inplannen&body=Beste%20Select%20Car%20Lease%2C%0A%0AMijn%20APK%20verloopt%20binnenkort.%20Kunt%20u%20dit%20voor%20mij%20inplannen%3F%0A%0AMijn%20gegevens%3A%0AKenteken%3A%20%0ANaam%3A%20%0ATelefoonnummer%3A%20%0AE-mailadres%3A%20%0A%0AMet%20vriendelijke%20groet'" style="width:100%;padding:10px;background:#9a3412;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;">
+        <i class="ti ti-mail" style="font-size:13px" aria-hidden="true"></i> APK inplannen via mail
+      </button>
+    </div>
+  </div>
+
+  <div class="app-header">
+    <div class="scl-logo">
+      <img src="/images/logo.png" alt="Select Car Lease" style="height:28px;width:auto;">
+    </div>
+    <div class="app-hero">
+      <div id="a-welcome" class="app-welcome"><span id="a-welcome-lbl">WELKOM</span>, <span id="a-welcome-name"></span></div>
+      <div class="app-plate" id="a-plate">98-ZXK-3</div>
+      <div class="app-model" id="a-model">Volkswagen Golf · 2022 · Zilver</div>
+      <div class="app-status"><span class="status-dot"></span><span id="a-status">Leasecontract actief</span></div>
+    </div>
+    <div style="height:3px;background:#f5a623;margin-top:16px;"></div>
+  </div>
+  <div class="scroll-body">
+    <div class="app-body">
+      <div class="app-section-title" id="lbl-documents">Documenten</div>
+      <div class="doc-list">
+        <div class="doc-card" onclick="showDoc('groene')">
+          <div class="doc-icon" style="background:#f0fdf4"><i class="ti ti-shield-check" style="color:#15803d" aria-hidden="true"></i></div>
+          <div class="doc-info"><div class="doc-name" id="lbl-greencard">Groene kaart</div><div class="doc-sub" id="a-ins-sub">Allianz · t/m 31-12-2025</div></div>
+          <span class="badge" id="a-ins-badge">Geldig</span>
+        </div>
+        <div class="doc-card" onclick="showDoc('kenteken')">
+          <div class="doc-icon" style="background:#eff6ff"><i class="ti ti-id" style="color:#1d4ed8" aria-hidden="true"></i></div>
+          <div class="doc-info"><div class="doc-name" id="lbl-regcard">Kentekenkaart</div><div class="doc-sub" id="lbl-rdw">RDW · officieel kentekenbewijs</div></div>
+          <span class="badge badge-ok">Beschikbaar</span>
+        </div>
+      </div>
+      <div class="app-section-title" style="margin-top:20px" id="lbl-actions">Acties</div>
+      <div class="action-grid">
+        <div class="action-btn danger" onclick="showAppScreen('screen-schade')"><span class="action-icon"><i class="ti ti-alert-circle" style="color:var(--orange)" aria-hidden="true"></i></span><span class="action-label" id="lbl-damage">Schade melden</span><span class="action-sub" id="lbl-damagesub">Formulier invullen</span></div>
+        <div class="action-btn" onclick="showAppScreen('screen-onderhoud')"><span class="action-icon"><i class="ti ti-tool" style="color:var(--muted)" aria-hidden="true"></i></span><span class="action-label" id="lbl-maintenance">Onderhoud</span><span class="action-sub" id="lbl-maintsub">Info & instructies</span></div>
+        <div class="action-btn" onclick="showAppScreen('screen-pech')"><span class="action-icon"><i class="ti ti-car-off" style="color:var(--muted)" aria-hidden="true"></i></span><span class="action-label" id="lbl-breakdown">Pech onderweg</span><span class="action-sub" id="lbl-breakdownsub">Kies uw situatie</span></div>
+        <div class="action-btn" onclick="showAppScreen('screen-contract')"><span class="action-icon"><i class="ti ti-file-invoice" style="color:var(--orange)" aria-hidden="true"></i></span><span class="action-label" id="lbl-lease">Leasecontract</span><span class="action-sub" id="lbl-leasesub">Inleveren of verlengen</span></div>
+        <div class="action-btn" onclick="showAppScreen('screen-ruit')"><span class="action-icon"><i class="ti ti-windmill" style="color:#0ea5e9" aria-hidden="true"></i></span><span class="action-label">Ruitschade</span><span class="action-sub">123ruit.nl</span></div>
+      </div>
+      <div class="app-section-title" style="margin-top:20px" id="lbl-carinfo">Voertuiginfo</div>
+      <div class="info-card">
+        <div class="info-row"><span class="lbl" id="lbl-plate">Kenteken</span><span class="val" id="a-plate2"></span></div>
+        <div class="info-row"><span class="lbl" id="lbl-model-lbl">Merk & model</span><span class="val" id="a-model2"></span></div>
+        <div class="info-row"><span class="lbl" id="lbl-year">Bouwjaar</span><span class="val" id="a-year"></span></div>
+        <div class="info-row"><span class="lbl" id="lbl-fuel">Brandstof</span><span class="val" id="a-fuel"></span></div>
+        <div class="info-row"><span class="lbl" id="lbl-color">Kleur</span><span class="val" id="a-color"></span></div>
+        <div class="info-row"><span class="lbl" id="lbl-contract-lbl">Contract t/m</span><span class="val" id="a-contract"></span></div>
+      </div>
+    </div>
+    <div class="footer-bar">
+      <div id="manager-contact" style="display:none;margin-bottom:14px;"></div>
+      <a href="#" onclick="callPhone('0348467657');return false;"><i class="ti ti-phone" style="font-size:15px" aria-hidden="true"></i> 0348-467657</a>
+      <p>Select Car Lease<br>Middellandse Zee 5 · Woerden</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ DOC VIEWER ============ -->
+<div id="screen-doc" class="screen">
+  <div class="doc-header">
+    <button class="back-btn" onclick="showAppScreen('screen-app')" aria-label="Terug"><i class="ti ti-arrow-left"></i></button>
+    <h1 id="doc-title">Document</h1>
+  </div>
+  <div class="scroll-body">
+    <div class="doc-viewer-body">
+      <div class="doc-file-viewer" id="doc-file-viewer"></div>
+      <div class="detail-fields" id="doc-fields"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ONDERHOUD ============ -->
+<div id="screen-onderhoud" class="screen">
+  <div class="doc-header"><button class="back-btn" onclick="showAppScreen('screen-app')" aria-label="Terug"><i class="ti ti-arrow-left"></i></button><h1>Onderhoud</h1></div>
+  <div class="scroll-body"><div class="doc-viewer-body">
+
+    <div class="onderhoud-block">
+      <h3><i class="ti ti-calendar" style="color:#64748b;font-size:15px" aria-hidden="true"></i> Wanneer is onderhoud nodig?</h3>
+      <p>U houdt zelf in de gaten wanneer uw auto onderhoud nodig heeft. Dit kunt u op twee manieren controleren:</p>
+      <p style="margin-top:8px">· Het <strong>dashboard van de auto</strong> geeft een melding of waarschuwingslampje als onderhoud nadert.</p>
+      <p style="margin-top:4px">· Het <strong>onderhoudskaartje</strong> achter het zijpaneel van het dashboard toont de volgende onderhoudsbeurt.</p>
+      <p style="margin-top:8px">Bij twijfel kunt u altijd even bellen met ons — wij helpen u graag verder.</p>
+    </div>
+
+    <div class="onderhoud-block">
+      <h3><i class="ti ti-tools" style="color:#64748b;font-size:15px" aria-hidden="true"></i> Garage regelen</h3>
+      <p>Wilt u weten bij welke garage u terecht kunt voor onderhoud? Neem dan contact op via:</p>
+      <a href="#" onclick="openMailto('onderhoud@selectcarlease.nl','Garage advies','');return false;"  style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:9px 14px;background:#f8fafc;border:0.5px solid #e2e8f0;border-radius:9px;font-size:13px;color:#0d1f4e;font-weight:500;text-decoration:none;">
+        <i class="ti ti-mail" style="font-size:15px" aria-hidden="true"></i> onderhoud@selectcarlease.nl
+      </a>
+    </div>
+
+    <div class="onderhoud-block">
+      <h3><i class="ti ti-credit-card" style="color:#64748b;font-size:15px" aria-hidden="true"></i> Kosten</h3>
+      <p>Onderhoud is volledig inbegrepen in uw leasecontract. U betaalt niets aan de garage — dit loopt via Select Car Lease.</p>
+    </div>
+
+    <div class="onderhoud-block" style="border-left:3px solid #f5a623;border-radius:0 var(--radius) var(--radius) 0;">
+      <h3><i class="ti ti-alert-triangle" style="color:#f5a623;font-size:15px" aria-hidden="true"></i> Pech onderweg</h3>
+      <p>Staat u langs de weg? Bel Allianz Pechhulp — ook 's avonds en in het weekend.</p>
+      <button onclick="window.location.href='tel:0205929737'" style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:9px 14px;background:#f8fafc;border:0.5px solid #e2e8f0;border-radius:9px;font-size:13px;color:#0d1f4e;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;"  style="display:flex;align-items:center;gap:8px;margin-top:10px;padding:11px 14px;background:#0d1f4e;border-radius:10px;font-size:13px;color:#fff;font-weight:500;text-decoration:none;">
+        <i class="ti ti-phone" style="font-size:15px" aria-hidden="true"></i> 020-5929737 — Allianz pechhulp
+      </a>
+      <p style="font-size:11px;color:#94a3b8;margin-top:6px;">Beschikbaar 24/7 — ook 's avonds en weekenden</p>
+    </div>
+
+    <div class="onderhoud-block">
+      <h3><i class="ti ti-bolt" style="color:#64748b;font-size:15px" aria-hidden="true"></i> Lege accu</h3>
+      <p>Accu leeg? Bel Allianz Pechhulp. Zij regelen een startkabel of vervangend vervoer.</p>
+      <button onclick="window.location.href='tel:0205929737'" style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:9px 14px;background:#f8fafc;border:0.5px solid #e2e8f0;border-radius:9px;font-size:13px;color:#0d1f4e;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;"  style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:9px 14px;background:#f8fafc;border:0.5px solid #e2e8f0;border-radius:9px;font-size:13px;color:#0d1f4e;font-weight:500;text-decoration:none;">
+        <i class="ti ti-phone" style="font-size:15px" aria-hidden="true"></i> 020-5929737 — Allianz
+      </a>
+    </div>
+
+    <div class="onderhoud-block">
+      <h3><i class="ti ti-circle" style="color:#64748b;font-size:15px" aria-hidden="true"></i> Lekke band</h3>
+      <p>Controleer eerst of er een <strong>reservewiel</strong> aanwezig is. Dit vindt u meestal onder de kofferbakvloer of aan de achterzijde van het voertuig.</p>
+      <p style="margin-top:6px">Is er geen reservewiel? Bel Allianz Pechhulp.</p>
+      <button onclick="window.location.href='tel:0205929737'" style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:9px 14px;background:#f8fafc;border:0.5px solid #e2e8f0;border-radius:9px;font-size:13px;color:#0d1f4e;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;"  style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:9px 14px;background:#f8fafc;border:0.5px solid #e2e8f0;border-radius:9px;font-size:13px;color:#0d1f4e;font-weight:500;text-decoration:none;">
+        <i class="ti ti-phone" style="font-size:15px" aria-hidden="true"></i> 020-5929737 — Allianz
+      </a>
+    </div>
+
+    <div class="onderhoud-block" style="border-left:3px solid #dc2626;border-radius:0 var(--radius) var(--radius) 0;">
+      <h3><i class="ti ti-car-crash" style="color:#dc2626;font-size:15px" aria-hidden="true"></i> Schade & auto niet meer rijdbaar</h3>
+      <p>Is uw auto na een schade niet meer rijdbaar? Bel dan direct de ANWB voor berging en vervoer.</p>
+      <button onclick="window.location.href='tel:0592390440'" style="display:flex;align-items:center;gap:8px;margin-top:10px;padding:12px 14px;background:#dc2626;border:none;border-radius:10px;font-size:13px;color:#fff;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;width:100%;"  style="display:flex;align-items:center;gap:8px;margin-top:10px;padding:11px 14px;background:#dc2626;border-radius:10px;font-size:13px;color:#fff;font-weight:500;text-decoration:none;">
+        <i class="ti ti-phone" style="font-size:15px" aria-hidden="true"></i> 0592-390440 — ANWB
+      </a>
+    </div>
+
+    <!-- TAB GARAGES -->
+    <div id="tab-garages" class="admin-body" style="display:none;">
+      <div class="section-title">Samenwerkende garages</div>
+      <button class="admin-add-btn" onclick="showAddGarage()">➕ Garage toevoegen</button>
+      <div id="garage-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+      <div id="garage-empty" style="text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;">
+        <div style="font-size:40px;margin-bottom:10px">🔧</div>
+        <p>Nog geen garages toegevoegd.</p>
+      </div>
+    </div>
+
+    <!-- GARAGE FORMULIER -->
+    <div id="tab-garage-form" class="admin-body" style="display:none;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <button onclick="showTab('tab-garages')" style="background:rgba(245,166,35,0.1);border:1px solid rgba(245,166,35,0.3);border-radius:8px;padding:6px 14px;font-size:13px;color:#f5a623;cursor:pointer;font-family:Outfit,sans-serif;font-weight:500;">← Terug</button>
+        <span style="font-size:15px;font-weight:500;color:#0f172a;" id="garage-form-title">Garage toevoegen</span>
+      </div>
+      <div class="edit-section">
+        <div class="edit-section-title">Garagegegevens</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div><label class="form-label">Naam garage</label><input class="form-input" id="g-naam" placeholder="Bijv. Garage Jansen"></div>
+          <div><label class="form-label">Straat & huisnummer</label><input class="form-input" id="g-straat" placeholder="Hoofdstraat 1"></div>
+          <div class="form-row">
+            <div><label class="form-label">Postcode</label><input class="form-input" id="g-postcode" placeholder="1234AB" style="text-transform:uppercase"></div>
+            <div><label class="form-label">Stad</label><input class="form-input" id="g-stad" placeholder="Amsterdam"></div>
+          </div>
+          <div class="form-row">
+            <div><label class="form-label">Telefoon</label><input class="form-input" id="g-tel" type="tel" placeholder="010-1234567"></div>
+            <div><label class="form-label">Merk / specialisatie</label><input class="form-input" id="g-merk" placeholder="Bijv. Alle merken"></div>
+          </div>
+        </div>
+      </div>
+      <button class="save-btn" onclick="saveGarage()">💾 Garage opslaan</button>
+    </div>
+
+  </div></div>
+</div>
+
+<!-- ============ PECH ONDERWEG ============ -->
+<div id="screen-pech" class="screen">
+  <div class="doc-header"><button class="back-btn" onclick="showAppScreen('screen-app')" aria-label="Terug"><i class="ti ti-arrow-left"></i></button><h1>Pech onderweg</h1></div>
+  <div class="scroll-body"><div class="doc-viewer-body">
+    <p style="font-size:13px;color:#64748b;margin-bottom:16px;line-height:1.6;">Wat voor pech heeft u? Kies hieronder de situatie die het beste past.</p>
+    <div onclick="showAppScreen('screen-pech-band')" style="background:#fff;border:0.5px solid #e2e8f0;border-radius:var(--radius);padding:16px;display:flex;align-items:center;gap:14px;margin-bottom:8px;cursor:pointer;">
+      <div style="width:44px;height:44px;background:#fff7ed;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="ti ti-circle" style="font-size:22px;color:#f5a623" aria-hidden="true"></i>
+      </div>
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:500;color:#0f172a;margin-bottom:2px;">Lekke band</div>
+        <div style="font-size:12px;color:#64748b;">Controleer reservewiel of bel hulp</div>
+      </div>
+      <i class="ti ti-chevron-right" style="color:#f5a623;font-size:16px;" aria-hidden="true"></i>
+    </div>
+    <div onclick="showAppScreen('screen-pech-accu')" style="background:#fff;border:0.5px solid #e2e8f0;border-radius:var(--radius);padding:16px;display:flex;align-items:center;gap:14px;margin-bottom:8px;cursor:pointer;">
+      <div style="width:44px;height:44px;background:#fef2f2;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="ti ti-bolt" style="font-size:22px;color:#dc2626" aria-hidden="true"></i>
+      </div>
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:500;color:#0f172a;margin-bottom:2px;">Auto start niet / Accu leeg</div>
+        <div style="font-size:12px;color:#64748b;">Startkabel of pechhulp</div>
+      </div>
+      <i class="ti ti-chevron-right" style="color:#f5a623;font-size:16px;" aria-hidden="true"></i>
+    </div>
+    <div onclick="showAppScreen('screen-pech-overig')" style="background:#fff;border:0.5px solid #e2e8f0;border-radius:var(--radius);padding:16px;display:flex;align-items:center;gap:14px;cursor:pointer;">
+      <div style="width:44px;height:44px;background:#eff6ff;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="ti ti-help-circle" style="font-size:22px;color:#1d4ed8" aria-hidden="true"></i>
+      </div>
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:500;color:#0f172a;margin-bottom:2px;">Overige pech</div>
+        <div style="font-size:12px;color:#64748b;">Bel Allianz pechhulp</div>
+      </div>
+      <i class="ti ti-chevron-right" style="color:#f5a623;font-size:16px;" aria-hidden="true"></i>
+    </div>
+  </div></div>
+</div>
+
+<!-- PECH: LEKKE BAND -->
+<div id="screen-pech-band" class="screen">
+  <div class="doc-header"><button class="back-btn" onclick="showAppScreen('screen-pech')" aria-label="Terug"><i class="ti ti-arrow-left"></i></button><h1>Lekke band</h1></div>
+  <div class="scroll-body"><div class="doc-viewer-body">
+    <div class="onderhoud-block">
+      <h3><i class="ti ti-circle" style="color:#f5a623;font-size:15px" aria-hidden="true"></i> Stap 1 — Controleer reservewiel</h3>
+      <p>Controleer eerst of er een <strong>reservewiel</strong> aanwezig is. Dit vindt u meestal:</p>
+      <p style="margin-top:6px">· Onder de kofferbakvloer</p>
+      <p style="margin-top:4px">· Aan de achterzijde van het voertuig (SUV/bestelbus)</p>
+    </div>
+    <div class="onderhoud-block">
+      <h3><i class="ti ti-phone" style="color:#64748b;font-size:15px" aria-hidden="true"></i> Geen reservewiel? Bel Allianz</h3>
+      <p>Is er geen reservewiel of lukt het verwisselen niet? Bel Allianz Pechhulp — beschikbaar 24/7.</p>
+      <button onclick="window.location.href='tel:0205929737'" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;padding:13px;background:#0d1f4e;border:none;border-radius:10px;font-size:14px;color:#fff;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;width:100%;">
+        <i class="ti ti-phone" style="font-size:15px" aria-hidden="true"></i> 020-5929737 — Allianz pechhulp
+      </button>
+    </div>
+  </div></div>
+</div>
+
+<!-- PECH: ACCU -->
+<div id="screen-pech-accu" class="screen">
+  <div class="doc-header"><button class="back-btn" onclick="showAppScreen('screen-pech')" aria-label="Terug"><i class="ti ti-arrow-left"></i></button><h1>Auto start niet</h1></div>
+  <div class="scroll-body"><div class="doc-viewer-body">
+    <div class="onderhoud-block">
+      <h3><i class="ti ti-bolt" style="color:#dc2626;font-size:15px" aria-hidden="true"></i> Accu mogelijk leeg</h3>
+      <p>Als de auto niet start is de accu mogelijk leeg. Heeft u iemand in de buurt met een <strong>startkabel</strong>? Vraag of zij u kunnen helpen.</p>
+    </div>
+    <div class="onderhoud-block">
+      <h3><i class="ti ti-phone" style="color:#64748b;font-size:15px" aria-hidden="true"></i> Geen startkabel? Bel Allianz</h3>
+      <p>Bel Allianz Pechhulp — zij regelen een startkabel of vervangend vervoer.</p>
+      <button onclick="window.location.href='tel:0205929737'" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;padding:13px;background:#0d1f4e;border:none;border-radius:10px;font-size:14px;color:#fff;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;width:100%;">
+        <i class="ti ti-phone" style="font-size:15px" aria-hidden="true"></i> 020-5929737 — Allianz pechhulp
+      </button>
+    </div>
+  </div></div>
+</div>
+
+<!-- PECH: OVERIG -->
+<div id="screen-pech-overig" class="screen">
+  <div class="doc-header"><button class="back-btn" onclick="showAppScreen('screen-pech')" aria-label="Terug"><i class="ti ti-arrow-left"></i></button><h1>Overige pech</h1></div>
+  <div class="scroll-body"><div class="doc-viewer-body">
+    <div class="onderhoud-block">
+      <h3><i class="ti ti-help-circle" style="color:#1d4ed8;font-size:15px" aria-hidden="true"></i> Bel Allianz Pechhulp</h3>
+      <p>Voor alle overige pech kunt u 24/7 terecht bij Allianz Pechhulp — ook 's avonds en in het weekend.</p>
+      <button onclick="window.location.href='tel:0205929737'" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;padding:13px;background:#0d1f4e;border:none;border-radius:10px;font-size:14px;color:#fff;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;width:100%;">
+        <i class="ti ti-phone" style="font-size:15px" aria-hidden="true"></i> 020-5929737 — Allianz pechhulp
+      </button>
+      <p style="font-size:11px;color:#94a3b8;margin-top:8px;text-align:center;">Beschikbaar 24/7 — ook 's avonds en weekenden</p>
+    </div>
+
+  </div></div>
+</div>
+
+<!-- ============ SCHADE KEUZE ============ -->
+<div id="screen-schade" class="screen">
+  <div class="schade-header-bar">
+    <button class="back-btn" onclick="showAppScreen('screen-app')" style="background:rgba(255,255,255,0.2)">←</button>
+    <div><h1>Schade melden</h1><p>Wat is er gebeurd?</p></div>
+  </div>
+  <div class="scroll-body"><div class="schade-body">
+    <div style="font-size:14px;color:var(--muted);margin-bottom:16px;line-height:1.6;">Selecteer hieronder het soort schade. U krijgt daarna het juiste formulier te zien.</div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div onclick="showAppScreen('screen-schade-tegenpartij')" style="background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);padding:20px;cursor:pointer;display:flex;align-items:center;gap:16px;">
+        <div style="font-size:40px;flex-shrink:0">🚗💥🚗</div>
+        <div>
+          <div style="font-size:15px;font-weight:600;margin-bottom:4px">Schade met tegenpartij</div>
+          <div style="font-size:13px;color:var(--muted);line-height:1.5">Aanrijding of botsing waarbij een andere auto, fietser of voetganger betrokken is</div>
+        </div>
+      </div>
+      <div onclick="showAppScreen('screen-schade-eigen')" style="background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);padding:20px;cursor:pointer;display:flex;align-items:center;gap:16px;">
+        <div style="font-size:40px;flex-shrink:0">🚗🪨</div>
+        <div>
+          <div style="font-size:15px;font-weight:600;margin-bottom:4px">Schade zonder tegenpartij</div>
+          <div style="font-size:13px;color:var(--muted);line-height:1.5">Zelf veroorzaakt, bijv. tegen een paaltje, stoeprand, muur of dier gereden</div>
+        </div>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- ============ SCHADE MET TEGENPARTIJ ============ -->
+<div id="screen-schade-tegenpartij" class="screen">
+  <div class="schade-header-bar">
+    <button class="back-btn" onclick="showAppScreen('screen-schade')" aria-label="Terug"><i class="ti ti-arrow-left"></i></button>
+    <div><h1>Schade met tegenpartij</h1><p>Vul alles zo volledig mogelijk in</p></div>
+  </div>
+  <div class="scroll-body"><div class="schade-body">
+    <input type="hidden" id="s-type" value="tegenpartij">
+    <div class="schade-section">
+      <div class="schade-section-title">Uw gegevens</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div><label class="form-label">Naam bestuurder</label><input class="form-input" id="s-naam" placeholder="Voor- en achternaam"></div>
+        <div class="form-row">
+          <div><label class="form-label">Telefoon</label><input class="form-input" id="s-tel" type="tel" placeholder="06-..."></div>
+          <div><label class="form-label">E-mail</label><input class="form-input" id="s-email" type="email" placeholder="naam@mail.nl"></div>
+        </div>
+        <div class="form-row">
+          <div><label class="form-label">Rijbewijsnr.</label><input class="form-input" id="s-rijbewijs" placeholder="1234567890"></div>
+          <div><label class="form-label">Datum schade</label><input class="form-input" id="s-datum" type="date"></div>
+        </div>
+        <div class="form-row">
+          <div><label class="form-label">Tijdstip</label><input class="form-input" id="s-tijd" type="time"></div>
+          <div><label class="form-label">Snelheid (km/u)</label><input class="form-input" id="s-snelheid" type="number" placeholder="50"></div>
+        </div>
+        <div><label class="form-label">Locatie van het ongeval</label><input class="form-input" id="s-locatie" placeholder="Straat, stad"></div>
+      </div>
+    </div>
+    <div class="schade-section">
+      <div class="schade-section-title">Gegevens tegenpartij</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div><label class="form-label">Naam tegenpartij</label><input class="form-input" id="s-tp-naam" placeholder="Voor- en achternaam"></div>
+        <div class="form-row">
+          <div><label class="form-label">Telefoon</label><input class="form-input" id="s-tp-tel" type="tel" placeholder="06-..."></div>
+          <div><label class="form-label">E-mail</label><input class="form-input" id="s-tp-email" placeholder="naam@mail.nl"></div>
+        </div>
+        <div class="form-row">
+          <div><label class="form-label">Kenteken tegenpartij</label><input class="form-input" id="s-tp-kenteken" placeholder="AB-123-C" style="text-transform:uppercase"></div>
+          <div><label class="form-label">Verzekeraar</label><input class="form-input" id="s-tp-verzekering" placeholder="Naam verzekeraar"></div>
+        </div>
+        <div><label class="form-label">Polisnummer tegenpartij</label><input class="form-input" id="s-tp-polis" placeholder="Indien bekend"></div>
+        <div><label class="form-label">Naam & adres verzekeraar tegenpartij</label><input class="form-input" id="s-tp-adres" placeholder="Adres verzekeraar"></div>
+      </div>
+    </div>
+    <div class="schade-section">
+      <div class="schade-section-title">Omstandigheden</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div><label class="form-label">Weersomstandigheden</label><select class="form-select" id="s-weer"><option>Droog, helder</option><option>Bewolkt</option><option>Regen</option><option>Mist</option><option>Sneeuw / ijs</option></select></div>
+        <div><label class="form-label">Wegtype</label><select class="form-select" id="s-weg"><option>Stadsweg / 30-50 km/u</option><option>Provinciale weg / 80 km/u</option><option>Snelweg / 100-130 km/u</option><option>Parkeerterrein</option><option>Andere weg</option></select></div>
+        <div><label class="form-label">Wat is er precies gebeurd?</label><textarea class="form-textarea" id="s-omschrijving" placeholder="Beschrijf de toedracht zo gedetailleerd mogelijk..."></textarea></div>
+        <div><label class="form-label">Schade aan welke onderdelen?</label><textarea class="form-textarea" id="s-schade-omschrijving" placeholder="Bijv: voorbumper, linkerkoplamp..."></textarea></div>
+        <div><label class="form-label">Schade aan voertuig tegenpartij</label><textarea class="form-textarea" id="s-tp-schade" placeholder="Beschrijf de schade aan het voertuig van de tegenpartij..."></textarea></div>
+        <div class="form-row">
+          <div><label class="form-label">Getuigen?</label><select class="form-select" id="s-getuigen"><option value="nee">Nee</option><option value="ja">Ja</option></select></div>
+          <div><label class="form-label">Politie ingeschakeld?</label><select class="form-select" id="s-politie"><option value="nee">Nee</option><option value="ja">Ja, PV opgemaakt</option><option value="ja-geen-pv">Ja, geen PV</option></select></div>
+        </div>
+      </div>
+    </div>
+    <div class="schade-section">
+      <div class="schade-section-title">📷 Foto's van de schade</div>
+      <div class="photo-zone">
+        <input type="file" id="photo-input" accept="image/*" multiple onchange="handlePhotos(this)">
+        <div style="font-size:28px">📷</div>
+        <p>Tik om foto's toe te voegen</p>
+        <span>Meerdere foto's mogelijk</span>
+      </div>
+      <div class="photo-preview" id="photo-preview"></div>
+    </div>
+    <div class="warn-box">⚠️ Door het indienen bevestigt u dat alle gegevens naar waarheid zijn ingevuld.</div>
+    <button class="submit-btn" onclick="submitSchade('tegenpartij')" id="submit-btn">Schademelding indienen</button>
+  </div></div>
+</div>
+
+<!-- ============ SCHADE ZONDER TEGENPARTIJ ============ -->
+<div id="screen-schade-eigen" class="screen">
+  <div class="schade-header-bar">
+    <button class="back-btn" onclick="showAppScreen('screen-schade')" aria-label="Terug"><i class="ti ti-arrow-left"></i></button>
+    <div><h1>Schade zonder tegenpartij</h1><p>Vul alles zo volledig mogelijk in</p></div>
+  </div>
+  <div class="scroll-body"><div class="schade-body">
+    <div class="schade-section">
+      <div class="schade-section-title">Uw gegevens</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div><label class="form-label">Naam bestuurder</label><input class="form-input" id="e-naam" placeholder="Voor- en achternaam"></div>
+        <div class="form-row">
+          <div><label class="form-label">Telefoon</label><input class="form-input" id="e-tel" type="tel" placeholder="06-..."></div>
+          <div><label class="form-label">E-mail</label><input class="form-input" id="e-email" type="email" placeholder="naam@mail.nl"></div>
+        </div>
+        <div class="form-row">
+          <div><label class="form-label">Rijbewijsnr.</label><input class="form-input" id="e-rijbewijs" placeholder="1234567890"></div>
+          <div><label class="form-label">Datum schade</label><input class="form-input" id="e-datum" type="date"></div>
+        </div>
+        <div class="form-row">
+          <div><label class="form-label">Tijdstip</label><input class="form-input" id="e-tijd" type="time"></div>
+          <div><label class="form-label">Snelheid (km/u)</label><input class="form-input" id="e-snelheid" type="number" placeholder="50"></div>
+        </div>
+        <div><label class="form-label">Locatie van het ongeval</label><input class="form-input" id="e-locatie" placeholder="Straat, stad"></div>
+      </div>
+    </div>
+    <div class="schade-section">
+      <div class="schade-section-title">Omstandigheden</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div><label class="form-label">Waartegen / wat is er gebeurd?</label>
+          <select class="form-select" id="e-oorzaak">
+            <option>Paaltje / paal</option><option>Stoeprand / trottoirband</option><option>Muur / hek</option>
+            <option>Geparkeerde auto</option><option>Dier</option><option>Gevallen / omgeslagen</option><option>Anders</option>
+          </select>
+        </div>
+        <div><label class="form-label">Weersomstandigheden</label><select class="form-select" id="e-weer"><option>Droog, helder</option><option>Bewolkt</option><option>Regen</option><option>Mist</option><option>Sneeuw / ijs</option></select></div>
+        <div><label class="form-label">Wegtype</label><select class="form-select" id="e-weg"><option>Stadsweg / 30-50 km/u</option><option>Provinciale weg / 80 km/u</option><option>Snelweg / 100-130 km/u</option><option>Parkeerterrein</option><option>Andere weg</option></select></div>
+        <div><label class="form-label">Wat is er precies gebeurd?</label><textarea class="form-textarea" id="e-omschrijving" placeholder="Beschrijf de toedracht zo gedetailleerd mogelijk..."></textarea></div>
+        <div><label class="form-label">Schade aan welke onderdelen?</label><textarea class="form-textarea" id="e-schade-omschrijving" placeholder="Bijv: voorbumper, rechterzijkant..."></textarea></div>
+        <div><label class="form-label">Politie ingeschakeld?</label><select class="form-select" id="e-politie"><option value="nee">Nee</option><option value="ja">Ja, PV opgemaakt</option><option value="ja-geen-pv">Ja, geen PV</option></select></div>
+      </div>
+    </div>
+    <div class="schade-section">
+      <div class="schade-section-title">📷 Foto's van de schade</div>
+      <div class="photo-zone">
+        <input type="file" id="photo-input-eigen" accept="image/*" multiple onchange="handlePhotosEigen(this)">
+        <div style="font-size:28px">📷</div>
+        <p>Tik om foto's toe te voegen</p>
+        <span>Meerdere foto's mogelijk</span>
+      </div>
+      <div class="photo-preview" id="photo-preview-eigen"></div>
+    </div>
+    <div class="warn-box">⚠️ Door het indienen bevestigt u dat alle gegevens naar waarheid zijn ingevuld.</div>
+    <button class="submit-btn" onclick="submitSchade('eigen')" id="submit-btn-eigen">Schademelding indienen</button>
+  </div></div>
+</div>
+
+<!-- TIJDELIJKE PLACEHOLDER voor oud schade screen -->
+<div id="screen-schade-OLD" class="screen">
+  <div class="schade-section">
+      <div class="schade-section-title">📷 Foto's van de schade</div>
+      <div class="photo-zone">
+        <input type="file" id="photo-input" accept="image/*" multiple onchange="handlePhotos(this)">
+        <div style="font-size:28px">📷</div>
+        <p>Tik om foto's toe te voegen</p>
+        <span>Meerdere foto's mogelijk</span>
+      </div>
+      <div class="photo-preview" id="photo-preview"></div>
+    </div>
+    <div class="warn-box">⚠️ Door het indienen bevestigt u dat alle gegevens naar waarheid zijn ingevuld.</div>
+    <button class="submit-btn">Schademelding indienen</button>
+  </div></div>
+</div>
+
+<!-- GEBLOKKEERD -->
+<div id="screen-blocked" class="success-page" style="display:none;">
+  <div class="success-icon"><i class="ti ti-lock" style="font-size:60px;color:#64748b" aria-hidden="true"></i></div>
+  <h2 style="color:#0a2e52;">Toegang niet beschikbaar</h2>
+  <p>Deze auto is niet meer actief in ons systeem. Heeft u vragen? Neem contact op met Select Car Lease.</p>
+  <a href="tel:0348467657" style="margin-top:24px;padding:13px 28px;background:#0a2e52;color:white;border:none;border-radius:14px;font-size:14px;font-weight:500;text-decoration:none;display:inline-block;">📞 0348-467657</a>
+</div>
+
+<!-- ============ CONTRACT KEUZE ============ -->
+<div id="screen-contract" class="screen">
+  <div class="doc-header">
+    <button class="back-btn" onclick="showAppScreen('screen-app')" aria-label="Terug"><i class="ti ti-arrow-left"></i></button>
+    <h1>Leasecontract</h1>
+  </div>
+  <div class="scroll-body">
+    <div style="padding:20px 16px;">
+      <div style="font-size:13px;color:#64748b;margin-bottom:20px;line-height:1.6;">Wat wilt u doen met uw leasecontract?</div>
+
+      <div onclick="showAppScreen('screen-inleveren')" style="background:#fff;border:0.5px solid #e2e8f0;border-radius:var(--radius);padding:18px;display:flex;align-items:center;gap:16px;margin-bottom:10px;cursor:pointer;">
+        <div style="width:48px;height:48px;background:#fef2f2;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="ti ti-car-off" style="font-size:22px;color:#dc2626" aria-hidden="true"></i>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:15px;font-weight:500;color:#0f172a;margin-bottom:3px;">Auto inleveren</div>
+          <div style="font-size:12px;color:#64748b;line-height:1.5;">Maak een afspraak om uw leaseauto in te leveren of te laten ophalen.</div>
+        </div>
+        <i class="ti ti-chevron-right" style="font-size:18px;color:#94a3b8" aria-hidden="true"></i>
+      </div>
+
+      <div onclick="showAppScreen('screen-verlengen')" style="background:#fff;border:0.5px solid #e2e8f0;border-radius:var(--radius);padding:18px;display:flex;align-items:center;gap:16px;cursor:pointer;">
+        <div style="width:48px;height:48px;background:#f0fdf4;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="ti ti-refresh" style="font-size:22px;color:#15803d" aria-hidden="true"></i>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:15px;font-weight:500;color:#0f172a;margin-bottom:3px;">Contract verlengen</div>
+          <div style="font-size:12px;color:#64748b;line-height:1.5;">Geef aan dat u uw contract wilt verlengen en onder welke voorwaarden.</div>
+        </div>
+        <i class="ti ti-chevron-right" style="font-size:18px;color:#94a3b8" aria-hidden="true"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ AUTO INLEVEREN ============ -->
+<div id="screen-inleveren" class="screen">
+  <div class="doc-header">
+    <button class="back-btn" onclick="showAppScreen('screen-contract')" aria-label="Terug"><i class="ti ti-arrow-left"></i></button>
+    <h1>Auto inleveren</h1>
+  </div>
+  <div class="scroll-body">
+    <div style="padding:16px;" class="schade-body">
+
+      <div class="schade-section">
+        <div class="schade-section-title">Kies een inleverdatum</div>
+        <div style="font-size:12px;color:#64748b;margin-bottom:10px;line-height:1.5;">U kunt de auto inleveren vanaf 10 dagen na vandaag. Kies hieronder een datum.</div>
+        <div class="form-group">
+          <label class="form-label">Gewenste datum</label>
+          <input class="form-input" id="il-datum" type="date">
+        </div>
+        <div id="il-tijd-zelf" style="display:block;">
+          <label class="form-label">Gewenste aankomsttijd</label>
+          <input class="form-input" id="il-tijd" type="time" value="10:00">
+        </div>
+        <div id="il-dagdeel-ophalen" style="display:none;">
+          <label class="form-label">Voorkeur dagdeel ophalen</label>
+          <select class="form-select" id="il-dagdeel">
+            <option value="ochtend">Ochtend (tot 12:00)</option>
+            <option value="middag">Middag (12:00 – 17:00)</option>
+            <option value="hele dag">Hele dag (flexibel)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="schade-section">
+        <div class="schade-section-title">Hoe wilt u de auto inleveren?</div>
+        <div style="display:flex;flex-direction:column;gap:8px;" id="il-methode-keuze">
+          <div onclick="selectInleveren(this,'zelf')" class="type-opt selected" style="border-radius:var(--radius);">
+            <span class="type-opt-icon"><i class="ti ti-user" style="font-size:22px;color:#0d1f4e" aria-hidden="true"></i></span>
+            <div>
+              <div class="type-opt-label">Zelf brengen</div>
+              <div class="type-opt-sub">U brengt de auto naar ons kantoor in Woerden</div>
+            </div>
+          </div>
+          <div onclick="selectInleveren(this,'ophalen')" class="type-opt" style="border-radius:var(--radius);">
+            <span class="type-opt-icon"><i class="ti ti-truck" style="font-size:22px;color:#64748b" aria-hidden="true"></i></span>
+            <div>
+              <div class="type-opt-label">Laten ophalen <span style="font-size:11px;color:#f5a623;font-weight:500;">€95 excl. btw</span></div>
+              <div class="type-opt-sub">Wij halen de auto bij u op</div>
+            </div>
+          </div>
+        </div>
+        <input type="hidden" id="il-methode" value="zelf">
+      </div>
+
+      <div class="schade-section" id="il-ophaal-adres" style="display:none;">
+        <div class="schade-section-title">Ophaaladres</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div><label class="form-label">Straat & huisnummer</label><input class="form-input" id="il-straat" placeholder="Straat 1"></div>
+          <div class="form-row">
+            <div><label class="form-label">Postcode</label><input class="form-input" id="il-postcode" placeholder="1234 AB"></div>
+            <div><label class="form-label">Plaats</label><input class="form-input" id="il-plaats" placeholder="Amsterdam"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="schade-section">
+        <div class="schade-section-title">Uw contactgegevens</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div><label class="form-label">Naam</label><input class="form-input" id="il-naam" placeholder="Voor- en achternaam"></div>
+          <div class="form-row">
+            <div><label class="form-label">Telefoon</label><input class="form-input" id="il-tel" type="tel" placeholder="06-..."></div>
+            <div><label class="form-label">E-mail</label><input class="form-input" id="il-email" type="email" placeholder="naam@mail.nl"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="schade-section">
+        <div class="schade-section-title">Opmerkingen</div>
+        <textarea class="form-textarea" id="il-opmerking" placeholder="Heeft u nog opmerkingen of bijzonderheden?"></textarea>
+      </div>
+
+      <div class="warn-box">
+        <i class="ti ti-info-circle" style="font-size:14px;margin-right:6px" aria-hidden="true"></i>
+        Na het versturen ontvangt u een bevestiging op uw e-mailadres en nemen wij contact met u op.
+      </div>
+      <button class="submit-btn" onclick="submitInleveren()">
+        <i class="ti ti-send" style="font-size:16px" aria-hidden="true"></i> Afspraak aanvragen
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CONTRACT VERLENGEN ============ -->
+<div id="screen-verlengen" class="screen">
+  <div class="doc-header">
+    <button class="back-btn" onclick="showAppScreen('screen-contract')" aria-label="Terug"><i class="ti ti-arrow-left"></i></button>
+    <h1>Contract verlengen</h1>
+  </div>
+  <div class="scroll-body">
+    <div style="padding:16px;" class="schade-body">
+
+      <div class="schade-section">
+        <div class="schade-section-title">Uw wensen</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div>
+            <label class="form-label">Gewenste verlengingsduur</label>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input class="form-input" id="vl-duur" type="number" min="1" max="60" placeholder="bijv. 12" style="width:100px;">
+              <span style="font-size:14px;color:#64748b;white-space:nowrap;">maanden</span>
+            </div>
+          </div>
+          <div>
+            <label class="form-label">Wilt u dezelfde auto houden of een andere?</label>
+            <select class="form-select" id="vl-auto">
+              <option>Dezelfde auto</option>
+              <option>Liever een andere auto</option>
+              <option>Weet ik nog niet</option>
+            </select>
+          </div>
+          <div id="vl-andere-auto-blok" style="display:none;">
+            <label class="form-label">Voorkeur nieuwe auto</label>
+            <textarea class="form-textarea" id="vl-auto-wens" placeholder="Bijv. merk, type, brandstof, kleur..."></textarea>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="schade-section">
+        <div class="schade-section-title">Uw contactgegevens</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div><label class="form-label">Naam</label><input class="form-input" id="vl-naam" placeholder="Voor- en achternaam"></div>
+          <div class="form-row">
+            <div><label class="form-label">Telefoon</label><input class="form-input" id="vl-tel" type="tel" placeholder="06-..."></div>
+            <div><label class="form-label">E-mail</label><input class="form-input" id="vl-email" type="email" placeholder="naam@mail.nl"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="schade-section">
+        <div class="schade-section-title">Opmerkingen</div>
+        <textarea class="form-textarea" id="vl-opmerking" placeholder="Heeft u nog vragen of opmerkingen?"></textarea>
+      </div>
+
+      <div class="warn-box">
+        <i class="ti ti-info-circle" style="font-size:14px;margin-right:6px" aria-hidden="true"></i>
+        Na het versturen ontvangt u een bevestiging op uw e-mailadres en neemt Select Car Lease zo snel mogelijk contact met u op.
+      </div>
+      <button class="submit-btn" style="background:#15803d;" onclick="submitVerlengen()">
+        <i class="ti ti-send" style="font-size:16px" aria-hidden="true"></i> Verlengingsverzoek versturen
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ RUITSCHADE ============ -->
+<div id="screen-ruit" class="screen">
+  <div class="doc-header">
+    <button class="back-btn" onclick="showAppScreen('screen-app')" aria-label="Terug"><i class="ti ti-arrow-left"></i></button>
+    <h1>Ruitschade</h1>
+  </div>
+  <div class="scroll-body">
+    <div class="doc-viewer-body">
+
+      <div style="background:#fff;border:0.5px solid #e2e8f0;border-radius:var(--radius);padding:20px;text-align:center;margin-bottom:12px;">
+        <i class="ti ti-windmill" style="font-size:48px;color:#0ea5e9;display:block;margin-bottom:10px;" aria-hidden="true"></i>
+        <div style="font-size:16px;font-weight:600;color:#0f172a;margin-bottom:6px;">Ruitschade melden</div>
+        <div style="font-size:13px;color:#64748b;line-height:1.6;">Heeft u schade aan uw voorruit, zijruit of achterruit? Wij werken samen met een landelijke partner voor snelle en voordelige reparatie of vervanging.</div>
+      </div>
+
+      <div class="onderhoud-block" style="border-left:3px solid #0ea5e9;border-radius:0 var(--radius) var(--radius) 0;">
+        <h3><i class="ti ti-building" style="color:#0ea5e9;font-size:15px" aria-hidden="true"></i> Onze landelijke partner</h3>
+        <p>Voor ruitschade kunt u terecht bij onze landelijke partner <strong>123ruit.nl</strong>. Zij regelen snel en vakkundig de reparatie of vervanging van uw ruit.</p>
+        <button onclick="window.open('https://www.123ruit.nl','_blank')" style="display:inline-flex;align-items:center;gap:6px;margin-top:12px;padding:10px 16px;background:#0ea5e9;color:white;border:none;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;">
+          <i class="ti ti-external-link" style="font-size:14px" aria-hidden="true"></i> Ga naar 123ruit.nl
+        </button>
+      </div>
+
+      <div class="onderhoud-block" style="background:#fffbeb;border:0.5px solid #fcd34d;">
+        <h3><i class="ti ti-alert-triangle" style="color:#f5a623;font-size:15px" aria-hidden="true"></i> Let op — eigen risico</h3>
+        <p style="margin-bottom:8px;">Ruitschade en sterreparaties vallen <strong>onder het eigen risico</strong>. Houd rekening met de volgende kosten:</p>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#fff;border-radius:9px;border:0.5px solid #e2e8f0;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <i class="ti ti-star" style="color:#f5a623;font-size:16px" aria-hidden="true"></i>
+              <span style="font-size:13px;font-weight:500;color:#0f172a;">Sterreparatie</span>
+            </div>
+            <span style="font-size:14px;font-weight:600;color:#0f172a;">€ 65,-</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#fff;border-radius:9px;border:0.5px solid #e2e8f0;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <i class="ti ti-windmill" style="color:#0ea5e9;font-size:16px" aria-hidden="true"></i>
+              <span style="font-size:13px;font-weight:500;color:#0f172a;">Ruitvervanging</span>
+            </div>
+            <span style="font-size:14px;font-weight:600;color:#0f172a;">max. € 350,-</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="onderhoud-block">
+        <h3><i class="ti ti-phone" style="color:#64748b;font-size:15px" aria-hidden="true"></i> Vragen?</h3>
+        <p>Heeft u vragen over ruitschade? Neem contact op met Select Car Lease.</p>
+        <button onclick="window.location.href='tel:0348467657'" style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:10px 16px;background:#0d1f4e;color:white;border:none;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;">
+          <i class="ti ti-phone" style="font-size:14px" aria-hidden="true"></i> Bel 0348-467657
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- SUCCESS -->
+<div id="screen-success" class="success-page">
+  <div class="success-icon"><i class="ti ti-circle-check" style="font-size:60px;color:#15803d" aria-hidden="true"></i></div>
+  <h2 id="success-title">Verstuurd!</h2>
+  <p id="success-msg">Uw melding is verstuurd naar Select Car Lease. U ontvangt een bevestiging.</p>
+  <p style="margin-top:12px" id="success-ref"></p>
+  <button class="success-back" onclick="showAppScreen('screen-app')">← Terug naar overzicht</button>
+</div>
+
+
+<script>
+const SUPA_URL = 'https://kqstoxqegsngqkylnfkv.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtxc3RveHFlZ3NuZ3FreWxuZmt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMjk2NTYsImV4cCI6MjA5MzgwNTY1Nn0.Crc5id3NpM_FWp5J35hgSHSW3pJB-3bhDT-0LZk41ng';
+
+let cars = [];
+let editingId = null;
+let currentCarId = null;
+let uploadedFiles = { groene: null, kenteken: null };
+
+// SUPABASE HELPERS
+async function sbFetch(method, path, body) {
+  const res = await fetch(SUPA_URL + '/rest/v1/' + path, {
+    method,
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': 'Bearer ' + SUPA_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': method === 'POST' ? 'return=representation,resolution=merge-duplicates' : 'return=minimal'
+    },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if (method === 'GET' || method === 'POST') return res.json();
+  return res;
+}
+
+async function loadCarsFromDB() {
+  try {
+    const data = await sbFetch('GET', 'cars?select=*&order=created_at.desc');
+    if (Array.isArray(data)) {
+      cars = data.map(r => ({
+        id: r.id, plate: r.plate, model: r.model, klant: r.klant,
+        active: r.active, year: r.year, color: r.color, fuel: r.fuel,
+        contract: r.contract, apk: r.apk, insurer: r.insurer,
+        policy: r.policy, cover: r.cover, insFrom: r.ins_from,
+        insTo: r.ins_to, fileGroene: r.file_groene,
+        fileGreeneName: r.file_groene_name, fileKenteken: r.file_kenteken,
+        fileKentekenName: r.file_kenteken_name,
+        qrUrl: r.qr_url || null,
+        manager: r.manager || ''
+      }));
+    }
+  } catch(e) { console.error('Load error', e); }
+}
+
+async function saveCarToDB(car) {
+  const row = {
+    id: car.id, plate: car.plate, model: car.model, klant: car.klant,
+    klant_email: car.klantEmail || '', klant_tel: car.klantTel || '',
+    manager: car.manager || '',
+    uitgifte_datum: car.uitgifteDatum || null,
+    uitgifte_km: car.uitgifteKm || null,
+    uitgifte_brandstof: car.uitgifteBrandstof || null,
+    uitgifte: car.uitgifte ? JSON.stringify(car.uitgifte) : null,
+    inname: car.inname ? JSON.stringify(car.inname) : null,
+    active: car.active, year: car.year, color: car.color, fuel: car.fuel,
+    contract: car.contract, apk: car.apk, insurer: car.insurer,
+    policy: car.policy, cover: car.cover, ins_from: car.insFrom,
+    ins_to: car.insTo, file_groene: car.fileGroene,
+    file_groene_name: car.fileGreeneName, file_kenteken: car.fileKenteken,
+    file_kenteken_name: car.fileKentekenName, qr_url: car.qrUrl || null
+  };
+  await sbFetch('POST', 'cars?on_conflict=id', row);
+}
+
+async function deleteCarFromDB(id) {
+  await sbFetch('DELETE', 'cars?id=eq.' + id);
+}
+
+async function loadCarByID(id) {
+  try {
+    const data = await sbFetch('GET', 'cars?id=eq.' + id + '&select=*');
+    if (Array.isArray(data) && data.length > 0) {
+      const r = data[0];
+      return {
+        id: r.id, plate: r.plate, model: r.model, klant: r.klant,
+        active: r.active, year: r.year, color: r.color, fuel: r.fuel,
+        contract: r.contract, apk: r.apk, insurer: r.insurer,
+        policy: r.policy, cover: r.cover, insFrom: r.ins_from,
+        insTo: r.ins_to, fileGroene: r.file_groene,
+        fileGreeneName: r.file_groene_name, fileKenteken: r.file_kenteken,
+        fileKentekenName: r.file_kenteken_name, qrUrl: r.qr_url || null,
+        manager: r.manager || ''
+      };
+    }
+  } catch(e) { console.error('Load car error', e); }
+  return null;
+}
+
+// STORAGE (now uses Supabase)
+const ADMIN_USERS={'Denny':{pw:'Admin3446',role:'super'},'Mandy':{pw:'Select2026',role:'aanmaak'},'Mohamed':{pw:'Select2026',role:'aanmaak'},'Giel':{pw:'Select2026',role:'aanmaak'},'uitgifte':{pw:'Select2026',role:'uitgifte'}};
+
+async function doSlimLogin(){
+  var input = document.getElementById('login-input');
+  var pwEl = document.getElementById('login-pw');
+  var errEl = document.getElementById('login-error');
+  var btn = document.getElementById('login-btn');
+  if (!input || !pwEl || !btn) { alert('Pagina fout - herlaad de pagina'); return; }
+  
+  var inputVal = input.value.trim();
+  var pw = pwEl.value;
+  
+  errEl.style.display = 'none';
+  if (!inputVal || !pw) {
+    errEl.textContent = 'Vul uw gegevens in.';
+    errEl.style.display = 'block';
+    return;
+  }
+  
+  btn.textContent = 'Bezig...';
+  btn.disabled = true;
+  
+  try {
+    // Admin check
+    var ADMINS = {'Denny':{pw:'Admin3446',role:'super'},'Mandy':{pw:'Select2026',role:'aanmaak'},'Mohamed':{pw:'Select2026',role:'aanmaak'},'Giel':{pw:'Select2026',role:'aanmaak'},'uitgifte':{pw:'Select2026',role:'uitgifte'}};
+    if (ADMINS[inputVal] && ADMINS[inputVal].pw === pw) {
+      var role = ADMINS[inputVal].role;
+      localStorage.setItem('scl_user', inputVal);
+      localStorage.setItem('scl_role', role);
+      sessionStorage.setItem('scl_user', inputVal);
+      sessionStorage.setItem('scl_role', role);
+      try { await loadCarsFromDB(); } catch(e) { console.warn('loadCarsFromDB fout:', e); }
+      loginNaarJuistScherm(inputVal, role);
+      btn.textContent = 'Inloggen';
+      btn.disabled = false;
+      return;
+    }
+    
+    // Klant check via Supabase
+    var em = inputVal.toLowerCase().trim();
+    var res = await fetch(SUPA_URL + '/auth/v1/token?grant_type=password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPA_KEY },
+      body: JSON.stringify({ email: em, password: pw })
+    });
+    var data = await res.json();
+    
+    if (data.access_token) {
+      localStorage.setItem('klant_token', data.access_token);
+      localStorage.setItem('klant_email', em);
+      sessionStorage.setItem('klant_token', data.access_token);
+      sessionStorage.setItem('klant_email', em);
+      try { await loadCarsFromDB(); } catch(e) { console.warn('loadCarsFromDB fout:', e); }
+      var car = cars.find(function(c) { return c.klantEmail && c.klantEmail === em; });
+      if (car) {
+        loadCarApp(car);
+        showScreen('screen-app');
+      } else {
+        errEl.textContent = 'Geen leaseauto gevonden voor dit e-mailadres. Bel 0348-467657';
+        errEl.style.display = 'block';
+      }
+    } else {
+      errEl.textContent = (data.error_description || data.msg || 'Onjuiste inloggegevens. Probeer opnieuw.');
+      errEl.style.display = 'block';
+    }
+  } catch(e) {
+    console.error('Login fout:', e);
+    errEl.textContent = 'Verbindingsfout. Controleer internet en probeer opnieuw.';
+    errEl.style.display = 'block';
+  }
+  
+  btn.textContent = 'Inloggen';
+  btn.disabled = false;
+}
+
+
+function loginNaarJuistScherm(user,role){
+  if(role==='uitgifte'){renderUitgiftePortal();showScreen('screen-uitgifte-portal');}
+  else if(role==='aanmaak'){laadAanmaakScherm(user);showScreen('screen-aanmaak');}
+  else{renderCarList();showScreen('screen-admin');var el=document.getElementById('admin-username');if(el)el.textContent='\u{1F464} '+user;}
+}
+
+function doLogout(){localStorage.clear();sessionStorage.clear();showScreen('screen-klant-login');}
+function klantLogout(){localStorage.removeItem('klant_token');localStorage.removeItem('klant_email');sessionStorage.removeItem('klant_token');sessionStorage.removeItem('klant_email');showScreen('screen-klant-login');}
+function adminLogout(){doLogout();}
+
+async function resetWachtwoord(){
+  var email=document.getElementById('reset-email-inp').value.trim();
+  var msgEl=document.getElementById('reset-msg');
+  if(!email){msgEl.textContent='Vul uw e-mailadres in.';msgEl.style.cssText='display:block;background:#fef2f2;color:#dc2626;font-size:12px;padding:10px;border-radius:8px;';return;}
+  try{await fetch(SUPA_URL+'/auth/v1/recover',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPA_KEY},body:JSON.stringify({email:email.toLowerCase()})});msgEl.textContent='Reset link verstuurd!';msgEl.style.cssText='display:block;background:#f0fdf4;color:#15803d;font-size:12px;padding:10px;border-radius:8px;';}
+  catch(e){msgEl.textContent='Fout.';msgEl.style.cssText='display:block;background:#fef2f2;color:#dc2626;font-size:12px;padding:10px;border-radius:8px;';}
+}
+
+function stuurUitnodigingVoorCar(car){
+  var tempPw=Math.random().toString(36).slice(2,6).toUpperCase()+Math.random().toString(36).slice(2,5)+'1!';
+  try{fetch(SUPA_URL+'/auth/v1/signup',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPA_KEY},body:JSON.stringify({email:car.klantEmail,password:tempPw})});}catch(e){}
+  var subj=encodeURIComponent('Uw toegang tot Mijn Select Car Lease');
+  var body=encodeURIComponent('Beste '+car.klant+', welkom bij Select Car Lease! Uw portaal: '+window.location.origin+'. E-mail: '+car.klantEmail+'. Wachtwoord: '+tempPw+'. Met vriendelijke groet, Select Car Lease 0348-467657');
+  window.location.href='mailto:'+car.klantEmail+'?subject='+subj+'&body='+body;
+  toast('Uitnodiging verstuurd!');
+}
+
+function uitnodigingSturen(carIdOrEl){var cid=typeof carIdOrEl==='string'?carIdOrEl:carIdOrEl;var car=cars.find(function(c){return c.id===cid;});if(car&&car.klantEmail)stuurUitnodigingVoorCar(car);}
+
+function resetKlantWachtwoord(carId){
+  var car=cars.find(function(c){return c.id===carId;});if(!car||!car.klantEmail)return;
+  var tempPw=Math.random().toString(36).slice(2,6).toUpperCase()+Math.random().toString(36).slice(2,5)+'1!';
+  try{fetch(SUPA_URL+'/auth/v1/signup',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPA_KEY},body:JSON.stringify({email:car.klantEmail,password:tempPw})});}catch(e){}
+  var subj=encodeURIComponent('Nieuw wachtwoord Mijn Select Car Lease');
+  var body=encodeURIComponent('Beste '+car.klant+', uw nieuwe wachtwoord: '+tempPw+'. Inloggen via: '+window.location.origin+'. E-mail: '+car.klantEmail+'. Met vriendelijke groet, Select Car Lease');
+  window.location.href='mailto:'+car.klantEmail+'?subject='+subj+'&body='+body;
+  toast('Nieuw wachtwoord verstuurd!');
+}
+
+function laadAanmaakScherm(user){
+  var el=document.getElementById('aanmaak-username');if(el)el.textContent='\u{1F464} '+user;
+  var ids=['ac-plate','ac-model','ac-year','ac-contract','ac-apk','ac-klant','ac-email','ac-tel'];
+  ids.forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+  var errEl=document.getElementById('ac-error');if(errEl)errEl.style.display='none';
+  var rdwEl=document.getElementById('ac-rdw-status');if(rdwEl)rdwEl.style.display='none';
+  var ladenEl=document.getElementById('aanmaak-lijst');if(ladenEl){var mijn=cars.filter(function(c){return c.manager&&c.manager.split('|')[0]===user;});renderAanmaakLijst(mijn);}
+}
+
+function renderAanmaakLijst(mijnAutos){
+  var lijst=document.getElementById('aanmaak-lijst');if(!lijst)return;
+  if(mijnAutos.length===0){lijst.innerHTML='<p style="font-size:13px;color:#64748b;text-align:center;padding:16px 0;">Nog geen klanten toegevoegd.</p>';return;}
+  var html='<div style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Mijn klanten ('+mijnAutos.length+')</div>';
+  mijnAutos.forEach(function(car){
+    html+='<div style="background:white;border:0.5px solid #e2e8f0;border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">';
+    html+='<div><div style="font-size:14px;font-weight:600;color:#0f172a;">'+car.plate+'</div>';
+    html+='<div style="font-size:12px;color:#64748b;">'+(car.klant||'')+(car.model?' &middot; '+car.model:'')+'</div>';
+    if(car.klantEmail)html+='<div style="font-size:11px;color:#94a3b8;">'+car.klantEmail+'</div>';
+    html+='</div><div style="display:flex;gap:6px;">';
+    if(car.klantEmail){
+      html+='<button data-id="'+car.id+'" onclick="uitnodigingSturen(this.dataset.id)" style="padding:6px 10px;background:#eff6ff;color:#1d4ed8;border:0.5px solid #bfdbfe;border-radius:8px;font-size:11px;cursor:pointer;">📧</button>';
+      html+='<button data-id="'+car.id+'" onclick="resetKlantWachtwoord(this.dataset.id)" style="padding:6px 10px;background:#fff7ed;color:#c2410c;border:0.5px solid #fed7aa;border-radius:8px;font-size:11px;cursor:pointer;">🔑</button>';
+    }
+    html+='</div></div>';
+  });
+  lijst.innerHTML=html;
+}
+
+async function rdwLookupAanmaak(){
+  var plate=document.getElementById('ac-plate').value.replace(/[^A-Z0-9]/g,'').toUpperCase();
+  if(plate.length<4){toast('Voer een geldig kenteken in');return;}
+  var statusEl=document.getElementById('ac-rdw-status');
+  statusEl.textContent='Gegevens ophalen...';statusEl.style.display='block';statusEl.style.color='#64748b';
+  try{
+    var r=await fetch('https://opendata.rdw.nl/resource/m9d7-ebf2.json?kenteken='+plate);
+    var d=await r.json();
+    if(d&&d.length>0){
+      var v=d[0];
+      var merk=v.merk?v.merk.charAt(0).toUpperCase()+v.merk.slice(1).toLowerCase():'';
+      var type=v.handelsbenaming?v.handelsbenaming.charAt(0).toUpperCase()+v.handelsbenaming.slice(1).toLowerCase():'';
+      document.getElementById('ac-model').value=(merk+' '+type).trim();
+      if(v.datum_eerste_toelating)document.getElementById('ac-year').value=v.datum_eerste_toelating.substring(0,4);
+      if(v.vervaldatum_apk){var apk=v.vervaldatum_apk;document.getElementById('ac-apk').value=apk.substring(0,4)+'-'+apk.substring(4,6)+'-'+apk.substring(6,8);}
+      statusEl.textContent='\u2705 Gegevens ingevuld vanuit RDW';statusEl.style.color='#15803d';
+    }else{statusEl.textContent='Kenteken niet gevonden';statusEl.style.color='#dc2626';}
+  }catch(e){statusEl.textContent='RDW niet bereikbaar';statusEl.style.color='#dc2626';}
+}
+
+async function slaAanmaakOp(){
+  var plate=document.getElementById('ac-plate').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+  var model=document.getElementById('ac-model').value.trim();
+  var klant=document.getElementById('ac-klant').value.trim();
+  var email=document.getElementById('ac-email').value.trim().toLowerCase();
+  var errEl=document.getElementById('ac-error');errEl.style.display='none';
+  if(!plate){errEl.textContent='Vul het kenteken in.';errEl.style.display='block';return;}
+  if(!model){errEl.textContent='Vul merk & model in.';errEl.style.display='block';return;}
+  if(!klant){errEl.textContent='Vul de naam van de klant in.';errEl.style.display='block';return;}
+  if(!email||!email.includes('@')){errEl.textContent='Vul een geldig e-mailadres in.';errEl.style.display='block';return;}
+  var user=sessionStorage.getItem('scl_user')||localStorage.getItem('scl_user');
+  var car={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),plate:plate,model:model,year:document.getElementById('ac-year').value,klant:klant,klantEmail:email,klantTel:document.getElementById('ac-tel').value.trim(),manager:user+'|',active:'1',contract:document.getElementById('ac-contract').value,apk:document.getElementById('ac-apk').value,insurer:'Loxo / Meijers Assuranti\u00EBn',policy:'ZWAKA/6C4E8EW',fuel:'Benzine',color:'',cover:'',ins_from:'',ins_to:''};
+  try{
+    await saveCarToDB(car);cars.push(car);
+    toast('\u2705 Klant opgeslagen!');
+    setTimeout(function(){stuurUitnodigingVoorCar(car);},200);
+    laadAanmaakScherm(user);
+  }catch(e){errEl.textContent='Fout bij opslaan. Probeer opnieuw.';errEl.style.display='block';}
+}
+
+
+async function load(){
+  var savedUser=localStorage.getItem('scl_user');var savedRole=localStorage.getItem('scl_role');
+  var klantToken=localStorage.getItem('klant_token');var klantEmail=localStorage.getItem('klant_email');
+  if(klantToken&&klantEmail){
+    try{
+      await loadCarsFromDB();
+      var car=cars.find(function(c){return c.klantEmail&&c.klantEmail===klantEmail;});
+      if(car){loadCarApp(car);showScreen('screen-app');return;}
+    }catch(e){}
+    localStorage.removeItem('klant_token');localStorage.removeItem('klant_email');
+  }
+  if(savedUser&&!savedRole)savedRole='super'; // backward compat
+  if(savedUser&&savedRole){
+    sessionStorage.setItem('scl_user',savedUser);sessionStorage.setItem('scl_role',savedRole);
+    await loadCarsFromDB();loginNaarJuistScherm(savedUser,savedRole);return;
+  }
+  var savedLang=localStorage.getItem('scl_lang');if(savedLang)lang=savedLang;
+  showScreen('screen-klant-login');
+}
+
+function doLogin() {
+  var user = document.getElementById('login-user').value.trim();
+  var pw = document.getElementById('login-pw').value;
+  if (USERS[user] && USERS[user] === pw) {
+    sessionStorage.setItem('scl_admin', '1');
+    sessionStorage.setItem('scl_user', user);
+    document.getElementById('login-error').style.display = 'none';
+    loadCarsFromDB().then(function() {
+      if (user === 'uitgifte') {
+        renderUitgiftePortal();
+        showScreen('screen-uitgifte-portal');
+      } else {
+        renderCarList();
+        showScreen('screen-admin');
+        var el = document.getElementById('admin-username');
+        if (el) el.textContent = '👤 ' + user;
+      }
+    });
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+    document.getElementById('login-pw').value = '';
+  }
+}
+
+function togglePwVisibility() {
+  var inp = document.getElementById('login-pw');
+  var eye = document.getElementById('pw-eye');
+  if (!inp || !eye) return;
+  if (inp.type === 'password') { inp.type = 'text'; eye.textContent = '🙈'; }
+  else { inp.type = 'password'; eye.textContent = '👁'; }
+}
+
+async function klantLogin() {
+  const email = document.getElementById('klant-email-inp').value.trim();
+  const pw = document.getElementById('klant-pw-inp').value;
+  const errEl = document.getElementById('klant-login-error');
+  const btn = document.getElementById('klant-login-btn');
+  if (!email || !pw) { errEl.textContent = 'Vul uw e-mailadres en wachtwoord in.'; errEl.style.display = 'block'; return; }
+  btn.textContent = 'Bezig...'; btn.disabled = true;
+  errEl.style.display = 'none';
+  try {
+    const res = await fetch(SUPA_URL + '/auth/v1/token?grant_type=password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPA_KEY },
+      body: JSON.stringify({ email, password: pw })
+    });
+    const data = await res.json();
+    if (data.access_token) {
+      sessionStorage.setItem('klant_token', data.access_token);
+      sessionStorage.setItem('klant_email', email);
+      await loadCarsFromDB();
+      const car = cars.find(c => c.klantEmail && c.klantEmail.toLowerCase() === email.toLowerCase());
+      if (car) { loadCarApp(car); showScreen('screen-app'); }
+      else { errEl.textContent = 'Geen leaseauto gevonden. Neem contact op met Select Car Lease.'; errEl.style.display = 'block'; }
+    } else {
+      errEl.textContent = 'Onjuist e-mailadres of wachtwoord.';
+      errEl.style.display = 'block';
+    }
+  } catch(e) {
+    errEl.textContent = 'Verbindingsfout. Probeer het opnieuw.';
+    errEl.style.display = 'block';
+  }
+  btn.textContent = 'Inloggen'; btn.disabled = false;
+}
+
+async function resetWachtwoord() {
+  const email = document.getElementById('reset-email-inp').value.trim();
+  const msgEl = document.getElementById('reset-msg');
+  if (!email) { msgEl.textContent = 'Vul uw e-mailadres in.'; msgEl.style.cssText = 'display:block;background:#fef2f2;color:#dc2626;font-size:12px;margin-bottom:12px;padding:10px;border-radius:8px;'; return; }
+  try {
+    await fetch(SUPA_URL + '/auth/v1/recover', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPA_KEY },
+      body: JSON.stringify({ email })
+    });
+    msgEl.textContent = 'Reset link verstuurd! Controleer uw e-mail.';
+    msgEl.style.cssText = 'display:block;background:#f0fdf4;color:#15803d;font-size:12px;margin-bottom:12px;padding:10px;border-radius:8px;';
+  } catch(e) {
+    msgEl.textContent = 'Fout bij versturen. Probeer opnieuw.';
+    msgEl.style.cssText = 'display:block;background:#fef2f2;color:#dc2626;font-size:12px;margin-bottom:12px;padding:10px;border-radius:8px;';
+  }
+}
+
+function klantLogout() {
+  sessionStorage.removeItem('klant_token');
+  sessionStorage.removeItem('klant_email');
+  showScreen('screen-klant-login');
+}
+
+async function uitnodigingSturen(carId) {
+  const car = cars.find(c => c.id === carId);
+  if (!car || !car.klantEmail) { toast('Geen e-mailadres bekend voor deze klant'); return; }
+  const btn = document.getElementById('invite-btn-' + carId);
+  if (btn) { btn.textContent = 'Bezig...'; btn.disabled = true; }
+  try {
+    const tempPw = Math.random().toString(36).slice(2,10) + 'A1!';
+    const res = await fetch(SUPA_URL + '/auth/v1/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPA_KEY },
+      body: JSON.stringify({ email: car.klantEmail, password: tempPw })
+    });
+    const data = await res.json();
+    const naam = car.klant || '';
+    const origin = window.location.origin;
+    var subj = encodeURIComponent('Uw toegang tot Mijn Select Car Lease');
+    var body;
+    if (data.id || (data.user && data.user.id)) {
+      body = encodeURIComponent('Beste ' + naam + ', uw leaseportaal is klaar. Log in via: ' + origin + '. Uw e-mail: ' + car.klantEmail + '. Tijdelijk wachtwoord: ' + tempPw + '. Met vriendelijke groet, Select Car Lease 0348-467657');
+    } else {
+      body = encodeURIComponent('Beste ' + naam + ', u kunt inloggen op uw leaseportaal via: ' + origin + '. Uw e-mail: ' + car.klantEmail + '. Wachtwoord vergeten? Gebruik de optie op de inlogpagina. Met vriendelijke groet, Select Car Lease 0348-467657');
+    }
+    window.location.href = 'mailto:' + car.klantEmail + '?subject=' + subj + '&body=' + body;
+    toast('Uitnodiging verstuurd!');
+  } catch(e) {
+    toast('Fout bij versturen uitnodiging');
+  }
+  if (btn) { btn.textContent = '📧 Uitnodiging'; btn.disabled = false; }
+}
+
+document.getElementById('s-datum').valueAsDate = new Date();
+document.getElementById('e-datum').valueAsDate = new Date();
+
+// Set minimum date for inleveren (today + 10 days)
+const minDate = new Date();
+minDate.setDate(minDate.getDate() + 10);
+const minDateStr = minDate.toISOString().split('T')[0];
+const ilDatum = document.getElementById('il-datum');
+if (ilDatum) {
+  ilDatum.min = minDateStr;
+  ilDatum.value = minDateStr;
+}
+
+// Inleveren methode select
+function selectInleveren(el, type) {
+  document.querySelectorAll('#il-methode-keuze .type-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('il-methode').value = type;
+  document.getElementById('il-ophaal-adres').style.display = type === 'ophalen' ? 'block' : 'none';
+  document.getElementById('il-tijd-zelf').style.display = type === 'zelf' ? 'block' : 'none';
+  document.getElementById('il-dagdeel-ophalen').style.display = type === 'ophalen' ? 'block' : 'none';
+}
+
+// Verlengen: toggle andere auto
+document.getElementById('vl-auto') && document.getElementById('vl-auto').addEventListener('change', function() {
+  document.getElementById('vl-andere-auto-blok').style.display = this.value === 'Liever een andere auto' ? 'block' : 'none';
+});
+
+function submitInleveren() {
+  const naam = document.getElementById('il-naam').value;
+  const datum = document.getElementById('il-datum').value;
+  const methode = document.getElementById('il-methode').value;
+  if (!naam || !datum) { toast('⚠️ Vul minimaal uw naam en gewenste datum in'); return; }
+  const car = cars.find(c => c.id === currentCarId) || {};
+  const fmtDatum = datum ? new Date(datum).toLocaleDateString('nl-NL') : '-';
+  let body = `AFSPRAAK INLEVEREN LEASEAUTO
+Kenteken: ${car.plate||''} (${car.model||''})
+
+Gewenste datum: ${fmtDatum}
+Wijze: ${methode === 'zelf' ? 'Zelf brengen' : 'Ophalen (€95 excl. btw)'}
+`;
+  if (methode === 'ophalen') {
+    body += `Ophaaladres: ${document.getElementById('il-straat').value}, ${document.getElementById('il-postcode').value} ${document.getElementById('il-plaats').value}
+`;
+  }
+  body += `
+Naam: ${naam}
+Telefoon: ${document.getElementById('il-tel').value}
+Email: ${document.getElementById('il-email').value}
+Opmerkingen: ${document.getElementById('il-opmerking').value}`;
+  const subject = encodeURIComponent('Afspraak inleveren ' + (car.plate||''));
+  const klantEmailIL = document.getElementById('il-email').value;
+  const toIL = 'info@selectcarlease.nl' + (klantEmailIL ? ',' + klantEmailIL : '');
+  window.location.href = 'mailto:' + toIL + '?subject=' + subject + '&body=' + encodeURIComponent(body);
+  if(document.getElementById('success-title')) document.getElementById('success-title').textContent = 'Inleverafspraak verstuurd!';
+  if(document.getElementById('success-msg')) document.getElementById('success-msg').textContent = 'Uw inleverafspraak is verstuurd naar Select Car Lease. Wij nemen zo snel mogelijk contact met u op ter bevestiging.';
+  if(document.getElementById('success-ref')) document.getElementById('success-ref').textContent = '';
+  setTimeout(() => showAppScreen('screen-success'), 800);
+}
+
+function submitVerlengen() {
+  const naam = document.getElementById('vl-naam').value;
+  const duur = document.getElementById('vl-duur').value;
+  if (!naam || !duur) { toast('⚠️ Vul minimaal uw naam en aantal maanden in'); return; }
+  const car = cars.find(c => c.id === currentCarId) || {};
+  let body = `VERLENGINGSVERZOEK LEASECONTRACT
+Kenteken: ${car.plate||''} (${car.model||''})
+
+Gewenste verlengingsduur: ${duur} maanden
+Auto: ${document.getElementById('vl-auto').value}
+`;
+  if (document.getElementById('vl-auto').value === 'Liever een andere auto') {
+    body += `Voorkeur nieuwe auto: ${document.getElementById('vl-auto-wens').value}
+`;
+  }
+  body += `Gewenst maandbedrag: ${document.getElementById('vl-budget').value||'Niet opgegeven'}
+
+Naam: ${naam}
+Telefoon: ${document.getElementById('vl-tel').value}
+Email: ${document.getElementById('vl-email').value}
+Opmerkingen: ${document.getElementById('vl-opmerking').value}`;
+  const subject = encodeURIComponent('Verlengingsverzoek ' + (car.plate||''));
+  const klantEmailVL = document.getElementById('vl-email').value;
+  const toVL = 'info@selectcarlease.nl' + (klantEmailVL ? ',' + klantEmailVL : '');
+  window.location.href = 'mailto:' + toVL + '?subject=' + subject + '&body=' + encodeURIComponent(body);
+  if(document.getElementById('success-title')) document.getElementById('success-title').textContent = 'Verlenging aangevraagd!';
+  if(document.getElementById('success-msg')) document.getElementById('success-msg').textContent = 'Uw verlengingsverzoek is verstuurd naar Select Car Lease. Wij nemen zo snel mogelijk contact met u op.';
+  if(document.getElementById('success-ref')) document.getElementById('success-ref').textContent = '';
+  setTimeout(() => showAppScreen('screen-success'), 800);
+}
+
+load();
+
+
+
+// PWA INSTALL
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const banner = document.getElementById('install-banner');
+  if (banner && !sessionStorage.getItem('install-dismissed')) {
+    banner.style.display = 'flex';
+  }
+});
+
+async function newQRForCar(id) {
+  const car = cars.find(c => c.id === id);
+  if (!car) return;
+  const confirm1 = confirm(`Nieuwe QR code aanmaken voor ${car.plate}?
+
+De oude QR code van de vorige klant werkt dan niet meer.
+Gebruik dit elke keer als je de auto aan een nieuwe klant geeft.`);
+  if (!confirm1) return;
+
+  // Generate new unique ID for this car
+  const newId = Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+  
+  toast('⏳ Nieuwe QR code aanmaken...');
+
+  try {
+    // Copy car with new ID to Supabase
+    const newCar = { ...car, id: newId, qrUrl: null, klant: '' };
+    const row = {
+      id: newId, plate: newCar.plate, model: newCar.model, klant: '', manager: newCar.manager || '',
+      active: newCar.active, year: newCar.year, color: newCar.color, fuel: newCar.fuel,
+      contract: newCar.contract, apk: newCar.apk, insurer: newCar.insurer,
+      policy: newCar.policy, cover: newCar.cover, ins_from: newCar.insFrom,
+      ins_to: newCar.insTo, file_groene: newCar.fileGroene,
+      file_groene_name: newCar.fileGreeneName, file_kenteken: newCar.fileKenteken,
+      file_kenteken_name: newCar.fileKentekenName, qr_url: null
+    };
+    await sbFetch('POST', 'cars?on_conflict=id', row);
+
+    // Delete old car record
+    await sbFetch('DELETE', 'cars?id=eq.' + id);
+
+    // Update local array
+    const idx = cars.findIndex(c => c.id === id);
+    if (idx >= 0) cars[idx] = newCar;
+
+    renderCarList();
+    toast('✅ Nieuwe QR code aangemaakt!');
+
+    // Show new QR immediately
+    showQR(newId);
+
+  } catch(e) {
+    console.error(e);
+    toast('❌ Mislukt, probeer opnieuw');
+  }
+}
+
+async function triggerInstall() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const result = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    document.getElementById('install-banner').style.display = 'none';
+  } else {
+    showIOSInstallTip();
+  }
+}
+
+function dismissInstall() {
+  document.getElementById('install-banner').style.display = 'none';
+  sessionStorage.setItem('install-dismissed', '1');
+}
+
+function showIOSInstallTip() {
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  if (isIOS) {
+    toast('Tik op het deel-icoon ↑ en kies "Zet op beginscherm"');
+  } else {
+    toast('Tik op de menuknop ⋮ van je browser en kies "Toevoegen aan beginscherm"');
+  }
+}
+
+// TAB FUNCTIONS - ADMIN
+function showTab(tab) {
+  ['tab-cars','tab-apk','tab-schade','tab-garages','tab-garage-form'].forEach(function(t) {
+    var el = document.getElementById(t);
+    if (el) el.style.display = t === tab ? 'block' : 'none';
+  });
+  ['btn-tab-cars','btn-tab-apk','btn-tab-schade','btn-tab-garages'].forEach(function(b) {
+    var btn = document.getElementById(b);
+    if (!btn) return;
+    var active = b === 'btn-' + tab;
+    btn.style.color = active ? '#0d1f4e' : '#64748b';
+    btn.style.borderBottom = active ? '2px solid #0d1f4e' : '2px solid transparent';
+    btn.style.fontWeight = active ? '600' : '500';
+  });
+  if (tab === 'tab-apk') renderAPK();
+  if (tab === 'tab-schade') renderSchade();
+  if (tab === 'tab-garages') renderGarageList();
+}
+
+function renderAPK() {
+  var list = document.getElementById('apk-list');
+  var empty = document.getElementById('apk-empty');
+  if (!list) return;
+  var now = new Date();
+  var in90 = new Date(); in90.setDate(in90.getDate() + 90);
+  var upcoming = cars.filter(function(c) { return c.apk && new Date(c.apk) <= in90; }).sort(function(a,b) { return new Date(a.apk) - new Date(b.apk); });
+  if (upcoming.length === 0) { list.innerHTML = ''; if(empty) empty.style.display = 'block'; return; }
+  if(empty) empty.style.display = 'none';
+  list.innerHTML = upcoming.map(function(car) {
+    var apkDate = new Date(car.apk);
+    var days = Math.ceil((apkDate - now) / 86400000);
+    var color = days < 0 ? '#dc2626' : days <= 30 ? '#f5a623' : '#15803d';
+    var bg = days < 0 ? '#fef2f2' : days <= 30 ? '#fff7ed' : '#f0fdf4';
+    var label = days < 0 ? 'Verlopen' : 'Nog ' + days + ' dagen';
+    var telClean = (car.klantTel||'').replace(/[^0-9]/g,'');
+    var waNum = '31' + telClean.replace(/^0/,'');
+    var waMsg = encodeURIComponent('Beste ' + (car.klant||'') + ', uw APK verloopt op ' + fmtDate(car.apk) + '. Neem contact op via onderhoud@selectcarlease.nl. Met vriendelijke groet, Select Car Lease');
+    var html = '<div style="background:#fff;border:0.5px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin-bottom:8px;">';
+    html += '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">';
+    html += '<div><div style="font-size:15px;font-weight:600;color:#0f172a;">' + car.plate + '</div>';
+    html += '<div style="font-size:12px;color:#64748b;">' + (car.model||'') + ' · ' + (car.klant||'Geen klant') + '</div>';
+    html += '<div style="font-size:12px;color:#64748b;">APK: ' + fmtDate(car.apk) + '</div></div>';
+    html += '<span style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;white-space:nowrap;background:' + bg + ';color:' + color + ';">' + label + '</span></div>';
+    html += '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
+    if (car.klantEmail) {
+      html += '<button onclick="doAPKmail(this)" data-email="' + car.klantEmail + '" data-plate="' + car.plate + '" data-klant="' + (car.klant||'') + '" data-apk="' + fmtDate(car.apk) + '" style="padding:7px 12px;background:#0d1f4e;color:white;border:none;border-radius:8px;font-size:11px;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;">✉ Mail</button>';
+    } else {
+      html += '<span style="font-size:11px;color:#94a3b8;">Geen e-mail</span>';
+    }
+    if (telClean) {
+      html += '<button onclick="doAPKwa(this)" data-wa="' + waNum + '" data-klant="' + (car.klant||'') + '" data-plate="' + car.plate + '" data-apk="' + fmtDate(car.apk) + '" style="padding:7px 12px;background:#25D366;color:white;border:none;border-radius:8px;font-size:11px;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;">💬 WA</button>';
+    } else {
+      html += '<span style="font-size:11px;color:#94a3b8;">Geen telefoon</span>';
+    }
+    html += '</div></div>';
+    return html;
+  }).join('');
+}
+
+function doAPKmail(btn) {
+  var email = btn.getAttribute('data-email');
+  var plate = btn.getAttribute('data-plate');
+  var klant = btn.getAttribute('data-klant');
+  var apk = btn.getAttribute('data-apk');
+  var subj = encodeURIComponent('APK herinnering ' + plate);
+  var body = encodeURIComponent('Beste ' + klant + ', uw APK verloopt op ' + apk + '. Neem contact op via onderhoud@selectcarlease.nl. Met vriendelijke groet, Select Car Lease');
+  window.location.href = 'mailto:' + email + '?subject=' + subj + '&body=' + body;
+}
+
+function doAPKwa(btn) {
+  var wa = btn.getAttribute('data-wa');
+  var klant = btn.getAttribute('data-klant');
+  var plate = btn.getAttribute('data-plate');
+  var apk = btn.getAttribute('data-apk');
+  var msg = encodeURIComponent('Beste ' + klant + ', uw leaseauto ' + plate + ' heeft binnenkort een APK keuring nodig (verloopt op ' + apk + '). Neem contact op via onderhoud@selectcarlease.nl. Met vriendelijke groet, Select Car Lease');
+  window.open('https://wa.me/' + wa + '?text=' + msg, '_blank');
+}
+
+// UITGIFTE & INNAME RAPPORTEN
+let huidigRapportCarId = null;
+let schadeRegelTeller = 0;
+
+const FOTO_LABELS = ['Linksvoor','Voorkant','Rechtsvoor','Rechtsachter','Achterkant','Linksachter','Kofferbak','Interieur voor','Interieur achter','KM-stand','Brandstofmeter'];
+const INNAME_FOTO_LABELS = ['Voorkant','Achterkant','Links','Rechts','Schade 1','Schade 2','Interieur','KM-stand','Extra'];
+var fotoStore={u:{},i:{}};
+function compressFoto(file,cb){var r=new FileReader();r.onload=function(e){var img=new Image();img.onload=function(){var mw=1024,mh=1024,w=img.width,h=img.height;if(w>mw){h=Math.round(h*mw/w);w=mw;}if(h>mh){w=Math.round(w*mh/h);h=mh;}var c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);cb(c.toDataURL('image/jpeg',0.72));};img.src=e.target.result;};r.readAsDataURL(file);}
+function handleFotoUpload(input,prefix,idx,label){var file=input.files[0];if(!file)return;compressFoto(file,function(data){if(!fotoStore[prefix])fotoStore[prefix]={};fotoStore[prefix][idx]={label:label,data:data};var icon=document.getElementById('foto-icon-'+prefix+'-'+idx);var lbl=document.getElementById('foto-label-el-'+prefix+'-'+idx);if(icon)icon.innerHTML='<img src="'+data+'" style="width:100%;height:70px;object-fit:cover;border-radius:6px;">';if(lbl)lbl.style.background='#f0fdf4';});}
+function handleFotoUpload2(input){
+  var prefix=input.getAttribute('data-prefix');
+  var idx=parseInt(input.getAttribute('data-idx'));
+  var label=input.getAttribute('data-label');
+  handleFotoUpload(input,prefix,idx,label);
+}
+function handleSchadeFoto(input,type,n){var file=input.files[0];if(!file)return;compressFoto(file,function(data){var p=document.getElementById('sfp-'+type+'-'+n);if(p){p.src=data;p.style.display='block';}var h=document.getElementById('sfd-'+type+'-'+n);if(h)h.value=data;});}
+const SCHADE_LOCATIES = ['Voorbumper', 'Achterbumper', 'Voorscherm links', 'Voorscherm rechts', 'Achterscherm links', 'Achterscherm rechts', 'Portier links voor', 'Portier links achter', 'Portier rechts voor', 'Portier rechts achter', 'Motorkap', 'Dak', 'Kofferdeksel', 'Spiegel links', 'Spiegel rechts', 'Voorruit', 'Achterruit'];
+const SCHADE_TYPES = ['Kras', 'Deuk / putje', 'Schaafschade', 'Barst / breuk', 'Ontbrekend onderdeel', 'Anders'];
+
+function openUitgifte(carId){
+  var car=cars.find(function(c){return c.id===carId;});if(!car)return;
+  huidigRapportCarId=carId;fotoStore.u={};
+  document.getElementById('uitgifte-subtitle').textContent=car.plate+' — '+(car.klant||'');
+  document.getElementById('u-kenteken').value=car.plate||'';
+  document.getElementById('u-model').value=car.model||'';
+  document.getElementById('u-klant').value=car.klant||'';
+  document.getElementById('u-datum').valueAsDate=new Date();
+  document.getElementById('u-km').value='';
+  document.getElementById('uitgifte-schades').innerHTML='';schadeRegelTeller=0;
+  // Carry-over vorige schades
+  var vs=[];
+  if(car.inname&&car.inname.nieuweSchades&&car.inname.nieuweSchades.length>0)vs=car.inname.nieuweSchades;
+  else if(car.uitgifte&&car.uitgifte.schades&&car.uitgifte.schades.length>0)vs=car.uitgifte.schades;
+  if(vs.length>0){
+    document.getElementById('uitgifte-schades').innerHTML='<div style="background:#fffbeb;border:0.5px solid #fcd34d;border-radius:8px;padding:9px 12px;margin-bottom:8px;font-size:12px;color:#92400e;">⚠️ Schades overgenomen. Verwijder wat gerepareerd is.</div>';
+    vs.forEach(function(s){addSchadeRegel('uitgifte',s.locatie,s.type,s.opmerking||'',s.fotoData||null);});
+  }
+  // Foto grid
+  var fd=document.getElementById('uitgifte-fotos');
+  fd.innerHTML=FOTO_LABELS.map(function(label,i){
+    return '<div style="border:0.5px solid #e2e8f0;border-radius:10px;overflow:hidden;background:#fff;">'
+      +'<div style="padding:6px 10px;font-size:10px;font-weight:500;color:#64748b;border-bottom:0.5px solid #e2e8f0;">'+label+'</div>'
+      +'<label id="foto-label-el-u-'+i+'" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px;cursor:pointer;min-height:80px;background:#f8fafc;">'
+      +'<input type="file" accept="image/*" capture="environment" style="display:none;" data-prefix="u" data-idx="'+i+'" data-label="'+label+'" onchange="handleFotoUpload2(this)">'
+      +'<span id="foto-icon-u-'+i+'" style="font-size:22px;">📷</span>'
+      +'<span style="font-size:9px;color:#94a3b8;margin-top:3px;">Tik om te fotograferen</span>'
+      +'</label></div>';
+  }).join('');
+  showScreen('screen-uitgifte');
+}
+
+function openInname(carId){
+  var car=cars.find(function(c){return c.id===carId;});if(!car)return;
+  huidigRapportCarId=carId;fotoStore.i={};
+  document.getElementById('inname-subtitle').textContent=car.plate+' — '+(car.klant||'');
+  document.getElementById('i-kenteken').value=car.plate||'';
+  document.getElementById('i-datum').valueAsDate=new Date();
+  document.getElementById('inname-schades').innerHTML='';schadeRegelTeller=0;
+  var ref=document.getElementById('inname-uitgifte-ref');
+  if(car.uitgifteDatum){ref.style.display='block';ref.innerHTML='<strong>Uitgifte op:</strong> '+fmtDate(car.uitgifteDatum)+' &middot; <strong>KM:</strong> '+(car.uitgifteKm||'-')+' &middot; <strong>Brandstof:</strong> '+(car.uitgifteBrandstof||'-');}
+  else ref.style.display='none';
+  var sl=document.getElementById('inname-schades-uitgifte');
+  if(car.uitgifte&&car.uitgifte.schades&&car.uitgifte.schades.length>0){
+    sl.innerHTML=car.uitgifte.schades.map(function(s){
+      var h='<div style="background:#f0fdf4;border:0.5px solid #bbf7d0;border-radius:8px;padding:8px 12px;font-size:12px;color:#15803d;display:flex;align-items:center;gap:10px;">';
+      if(s.fotoData)h+='<img src="'+s.fotoData+'" style="width:50px;height:38px;object-fit:cover;border-radius:5px;flex-shrink:0;">';
+      h+='<div><strong>'+s.locatie+'</strong> — '+s.type+(s.opmerking?'<br>'+s.opmerking:'')+'</div></div>';
+      return h;
+    }).join('');
+  }else sl.innerHTML='<div style="font-size:12px;color:#94a3b8;">Geen schades bij uitgifte.</div>';
+  var fd=document.getElementById('inname-fotos');
+  fd.innerHTML=INNAME_FOTO_LABELS.map(function(label,i){
+    var bf=car.uitgifte&&car.uitgifte.fotos&&car.uitgifte.fotos[i]?car.uitgifte.fotos[i].data:null;
+    return '<div style="border:0.5px solid #e2e8f0;border-radius:10px;overflow:hidden;background:#fff;">'
+      +'<div style="padding:6px 10px;font-size:10px;font-weight:500;color:#64748b;border-bottom:0.5px solid #e2e8f0;">'+label+'</div>'
+      +'<label id="foto-label-el-i-'+i+'" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px;cursor:pointer;min-height:80px;background:#f8fafc;">'
+      +'<input type="file" accept="image/*" capture="environment" style="display:none;" data-prefix="i" data-idx="'+i+'" data-label="'+label+'" onchange="handleFotoUpload2(this)">'
+      +'<span id="foto-icon-i-'+i+'" style="font-size:22px;">'+(bf?'<img src="'+bf+'" style="width:100%;height:70px;object-fit:cover;border-radius:6px;">':'📷')+'</span>'
+      +'<span style="font-size:9px;color:#94a3b8;margin-top:3px;">Tik om te fotograferen</span>'
+      +'</label></div>';
+  }).join('');
+  showScreen('screen-inname');
+}
+
+function handleFotoUpload(input,prefix,idx,label){var file=input.files[0];if(!file)return;compressFoto(file,function(data){if(!fotoStore[prefix])fotoStore[prefix]={};fotoStore[prefix][idx]={label:label,data:data};var icon=document.getElementById('foto-icon-'+prefix+'-'+idx);var lbl=document.getElementById('foto-label-el-'+prefix+'-'+idx);if(icon)icon.innerHTML='<img src="'+data+'" style="width:100%;height:70px;object-fit:cover;border-radius:6px;">';if(lbl)lbl.style.background='#f0fdf4';});}
+function handleFotoUpload2(input){
+  var prefix=input.getAttribute('data-prefix');
+  var idx=parseInt(input.getAttribute('data-idx'));
+  var label=input.getAttribute('data-label');
+  handleFotoUpload(input,prefix,idx,label);
+}
+function handleSchadeFoto(input,type,n){var file=input.files[0];if(!file)return;compressFoto(file,function(data){var p=document.getElementById('sfp-'+type+'-'+n);if(p){p.src=data;p.style.display='block';}var h=document.getElementById('sfd-'+type+'-'+n);if(h)h.value=data;});}
+// duplicate removed
+// duplicate SCHADE_TYPES removed
+
+function openUitgifte(carId){
+  var car=cars.find(function(c){return c.id===carId;});if(!car)return;
+  huidigRapportCarId=carId;fotoStore.u={};
+  document.getElementById('uitgifte-subtitle').textContent=car.plate+' — '+(car.klant||'');
+  document.getElementById('u-kenteken').value=car.plate||'';
+  document.getElementById('u-model').value=car.model||'';
+  document.getElementById('u-klant').value=car.klant||'';
+  document.getElementById('u-datum').valueAsDate=new Date();
+  document.getElementById('u-km').value='';
+  document.getElementById('uitgifte-schades').innerHTML='';schadeRegelTeller=0;
+  // Carry-over vorige schades
+  var vs=[];
+  if(car.inname&&car.inname.nieuweSchades&&car.inname.nieuweSchades.length>0)vs=car.inname.nieuweSchades;
+  else if(car.uitgifte&&car.uitgifte.schades&&car.uitgifte.schades.length>0)vs=car.uitgifte.schades;
+  if(vs.length>0){
+    document.getElementById('uitgifte-schades').innerHTML='<div style="background:#fffbeb;border:0.5px solid #fcd34d;border-radius:8px;padding:9px 12px;margin-bottom:8px;font-size:12px;color:#92400e;">⚠️ Schades overgenomen. Verwijder wat gerepareerd is.</div>';
+    vs.forEach(function(s){addSchadeRegel('uitgifte',s.locatie,s.type,s.opmerking||'',s.fotoData||null);});
+  }
+  // Foto grid
+  var fd=document.getElementById('uitgifte-fotos');
+  fd.innerHTML=FOTO_LABELS.map(function(label,i){
+    return '<div style="border:0.5px solid #e2e8f0;border-radius:10px;overflow:hidden;background:#fff;">'
+      +'<div style="padding:6px 10px;font-size:10px;font-weight:500;color:#64748b;border-bottom:0.5px solid #e2e8f0;">'+label+'</div>'
+      +'<label id="foto-label-el-u-'+i+'" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px;cursor:pointer;min-height:80px;background:#f8fafc;">'
+      +'<input type="file" accept="image/*" capture="environment" style="display:none;" data-prefix="u" data-idx="'+i+'" data-label="'+label+'" onchange="handleFotoUpload2(this)">'
+      +'<span id="foto-icon-u-'+i+'" style="font-size:22px;">📷</span>'
+      +'<span style="font-size:9px;color:#94a3b8;margin-top:3px;">Tik om te fotograferen</span>'
+      +'</label></div>';
+  }).join('');
+  showScreen('screen-uitgifte');
+}
+
+function openInname(carId) {
+  const car = cars.find(c => c.id === carId);
+  if (!car) return;
+  huidigRapportCarId = carId;
+  document.getElementById('inname-subtitle').textContent = car.plate + ' — ' + (car.klant||'');
+  document.getElementById('i-kenteken').value = car.plate || '';
+  document.getElementById('i-datum').valueAsDate = new Date();
+  document.getElementById('inname-schades').innerHTML = '';
+  schadeRegelTeller = 0;
+
+  // Show uitgifte reference
+  const ref = document.getElementById('inname-uitgifte-ref');
+  if (car.uitgifteDatum) {
+    ref.innerHTML = '<strong>Uitgifte op:</strong> ' + fmtDate(car.uitgifteDatum) + ' · <strong>KM:</strong> ' + (car.uitgifteKm||'-') + ' · <strong>Brandstof:</strong> ' + (car.uitgifteBrandstof||'-');
+  }
+
+  // Show uitgifte schades for comparison
+  const schadList = document.getElementById('inname-schades-uitgifte');
+  if (car.uitgifte && car.uitgifte.schades && car.uitgifte.schades.length > 0) {
+    schadList.innerHTML = car.uitgifte.schades.map(s =>
+      '<div style="background:#f0fdf4;border:0.5px solid #bbf7d0;border-radius:8px;padding:8px 12px;font-size:12px;color:#15803d;">' + s.locatie + ' — ' + s.type + (s.opmerking ? ': ' + s.opmerking : '') + '</div>'
+    ).join('');
+  } else {
+    schadList.innerHTML = '<div style="font-size:12px;color:#94a3b8;">Geen schades geregistreerd bij uitgifte.</div>';
+  }
+
+  // Build foto fields
+  const INNAME_FOTOS = ['Schade links voor', 'Schade links achter', 'Schade voorkant', 'Schade rechts voor', 'Schade rechts achter', 'Schade achterkant', 'Schade dak', 'Schade interieur', 'Schade kofferbak', 'Schade velgen', 'Kilometerteller', 'Brandstofmeter'];
+  const fotosDiv = document.getElementById('inname-fotos');
+  fotosDiv.innerHTML = INNAME_FOTOS.map((label, i) => `
+    <div style="border:0.5px solid #e2e8f0;border-radius:10px;overflow:hidden;background:#fff;">
+      <div style="padding:8px 10px;font-size:11px;font-weight:500;color:#64748b;border-bottom:0.5px solid #e2e8f0;">${label}</div>
+      <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;cursor:pointer;min-height:80px;background:#f8fafc;">
+      +'<input type="file" accept="image/*" capture="environment" style="display:none;" data-prefix="i" data-idx="'+i+'" data-label="'+label+'" onchange="handleFotoUpload2(this)">'
+        <span id="foto-icon-i-${i}" style="font-size:24px;">📷</span>
+        <span style="font-size:10px;color:#94a3b8;margin-top:4px;">Tik om te fotograferen</span>
+      </label>
+    </div>
+  `).join('');
+
+  showScreen('screen-inname');
+}
+
+function handleFotoUpload(input, prefix, idx, label) {
+  const file = input.files[0];
+  if (!file) return;
+  const icon = document.getElementById('foto-icon-' + prefix + '-' + idx);
+  if (icon) { icon.textContent = '✅'; icon.style.fontSize = '20px'; }
+  toast('📷 ' + label + ' opgeslagen');
+}
+
+function addSchadeRegel(type,locVal,typVal,opmVal,fotoData){
+  schadeRegelTeller++;var n=schadeRegelTeller;
+  var container=document.getElementById(type+'-schades');
+  var div=document.createElement('div');div.id='schade-'+type+'-'+n;
+  div.style.cssText='background:#fff;border:0.5px solid #e2e8f0;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:7px;';
+  var lo=SCHADE_LOCATIES.map(function(l){return '<option'+(l===locVal?' selected':'')+'>'+l+'</option>';}).join('');
+  var to=SCHADE_TYPES.map(function(t){return '<option'+(t===typVal?' selected':'')+'>'+t+'</option>';}).join('');
+  var fp=fotoData?'<img id="sfp-'+type+'-'+n+'" src="'+fotoData+'" style="width:55px;height:42px;object-fit:cover;border-radius:5px;border:0.5px solid #e2e8f0;">':'<img id="sfp-'+type+'-'+n+'" style="display:none;width:55px;height:42px;object-fit:cover;border-radius:5px;">';
+  div.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;">Schade '+n+'</span><button type="button" onclick="document.getElementById(\'schade-'+type+'-'+n+'\').remove()" style="background:#fef2f2;border:none;color:#dc2626;cursor:pointer;font-size:12px;padding:4px 8px;border-radius:6px;">✕ Verwijder</button></div>'
+    +'<select class="form-select" id="schade-loc-'+type+'-'+n+'"><option value="">Locatie...</option>'+lo+'</select>'
+    +'<select class="form-select" id="schade-type-'+type+'-'+n+'"><option value="">Soort schade...</option>'+to+'</select>'
+    +'<input class="form-input" id="schade-opm-'+type+'-'+n+'" placeholder="Toelichting" value="'+(opmVal||'')+'">'
+    +'<div style="display:flex;align-items:center;gap:8px;"><label style="display:flex;align-items:center;gap:5px;padding:6px 10px;background:#f8fafc;border:0.5px solid #e2e8f0;border-radius:8px;cursor:pointer;font-size:11px;color:#64748b;"><input type="file" accept="image/*" capture="environment" style="display:none;" onchange="handleSchadeFoto(this,\''+type+'\','+n+')">📷 Foto</label>'
+    +'<input type="hidden" id="sfd-'+type+'-'+n+'" value="'+(fotoData||'')+'">'
+    +fp+'</div>';
+  container.appendChild(div);
+}
+
+function getSchades(type){
+  var schades=[];
+  document.querySelectorAll('[id^="schade-loc-'+type+'-"]').forEach(function(el){
+    var n=el.id.replace('schade-loc-'+type+'-','');
+    var loc=el.value,st=document.getElementById('schade-type-'+type+'-'+n),opm=document.getElementById('schade-opm-'+type+'-'+n),fd=document.getElementById('sfd-'+type+'-'+n);
+    if(loc&&st&&st.value)schades.push({locatie:loc,type:st.value,opmerking:opm?opm.value:'',fotoData:fd?fd.value:''});
+  });
+  return schades;
+}
+
+async function slaUitgifteOp(){
+  var car=cars.find(function(c){return c.id===huidigRapportCarId;});if(!car)return;
+  var km=document.getElementById('u-km').value,datum=document.getElementById('u-datum').value;
+  if(!km){toast('Vul de kilometerstand in');return;}if(!datum){toast('Vul de datum in');return;}
+  var schades=getSchades('uitgifte');
+  var rapport={datum:datum,km:km,brandstof:document.getElementById('u-brandstof').value,
+    schoonBuiten:document.getElementById('u-schoon-buiten')?document.getElementById('u-schoon-buiten').value:'',
+    schoonBinnen:document.getElementById('u-schoon-binnen')?document.getElementById('u-schoon-binnen').value:'',
+    reservewiel:document.getElementById('u-reservewiel').value,hoedenplank:document.getElementById('u-hoedenplank').value,
+    sleutels:document.getElementById('u-sleutels').value,velgen:document.getElementById('u-velgen')?document.getElementById('u-velgen').value:'',
+    opmerkingen:document.getElementById('u-opmerkingen').value,
+    schades:schades,fotos:fotoStore.u||{},opgeslagenOp:new Date().toISOString()};
+  car.uitgifteDatum=datum;car.uitgifteKm=km;car.uitgifteBrandstof=rapport.brandstof;
+  car.uitgifte=rapport;car.inname=null;
+  await saveCarToDB(car);
+  var idx2=cars.findIndex(function(c){return c.id===huidigRapportCarId;});if(idx2>=0)cars[idx2]=car;
+  renderCarList();toast('Uitgifte rapport opgeslagen!');
+  var u=sessionStorage.getItem('scl_user')||localStorage.getItem('scl_user');
+  setTimeout(function(){if(u==='uitgifte'){renderUitgiftePortal();showScreen('screen-uitgifte-portal');}else showScreen('screen-admin');},600);
+}
+
+async function slaInnamepOp(){
+  var car=cars.find(function(c){return c.id===huidigRapportCarId;});if(!car)return;
+  var km=document.getElementById('i-km').value,datum=document.getElementById('i-datum').value;
+  if(!km){toast('Vul de kilometerstand in');return;}if(!datum){toast('Vul de datum in');return;}
+  var nieuweSchades=getSchades('inname');
+  var rapport={datum:datum,km:km,
+    brandstof:document.getElementById('i-brandstof')?document.getElementById('i-brandstof').value:'',
+    schoon:document.getElementById('i-schoon')?document.getElementById('i-schoon').value:'',
+    schoonBuiten:document.getElementById('i-schoon-buiten')?document.getElementById('i-schoon-buiten').value:'',
+    schoonBinnen:document.getElementById('i-schoon-binnen')?document.getElementById('i-schoon-binnen').value:'',
+    geur:document.getElementById('i-geur')?document.getElementById('i-geur').value:'',
+    velgen:document.getElementById('i-velgen')?document.getElementById('i-velgen').value:'',
+    reservewiel:document.getElementById('i-reservewiel')?document.getElementById('i-reservewiel').value:'',
+    hoedenplank:document.getElementById('i-hoedenplank')?document.getElementById('i-hoedenplank').value:'',
+    sleutels:document.getElementById('i-sleutels')?document.getElementById('i-sleutels').value:'',
+    opmerkingen:document.getElementById('i-opmerkingen')?document.getElementById('i-opmerkingen').value:'',
+    nieuweSchades:nieuweSchades,fotos:fotoStore.i||{},opgeslagenOp:new Date().toISOString()};
+  car.inname=rapport;
+  await saveCarToDB(car);
+  var idx4=cars.findIndex(function(c){return c.id===huidigRapportCarId;});if(idx4>=0)cars[idx4]=car;
+  renderCarList();toast('Inname rapport opgeslagen!');
+  var uI=sessionStorage.getItem('scl_user')||localStorage.getItem('scl_user');
+  setTimeout(function(){if(uI==='uitgifte'){renderUitgiftePortal();showScreen('screen-uitgifte-portal');}else showScreen('screen-admin');},600);
+}
+
+function renderUitgiftePortal() {
+  const list = document.getElementById('uitgifte-portal-list');
+  const empty = document.getElementById('uitgifte-portal-empty');
+  if (!list) return;
+
+  const klaarUitgifte = cars.filter(c => c.active === 'uitgifte' && !c.uitgifteDatum);
+  const klaarInname = cars.filter(c => c.active === 'inname');
+
+  if (klaarUitgifte.length === 0 && klaarInname.length === 0) {
+    list.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+
+  let html = '';
+
+  if (klaarUitgifte.length > 0) {
+    html += '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#f5a623;margin-bottom:8px;">📋 Klaar voor uitgifte</div>';
+    html += klaarUitgifte.map(car => `
+      <div style="background:#fff;border:0.5px solid #e2e8f0;border-radius:14px;padding:14px;margin-bottom:8px;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">
+          <div>
+            <div style="font-size:16px;font-weight:600;color:#0f172a;">${car.plate}</div>
+            <div style="font-size:12px;color:#64748b;">${car.model||''} · ${car.klant||'Geen klant'}</div>
+            ${car.manager ? '<div style="font-size:11px;color:#64748b;margin-top:2px;">👤 ' + car.manager.split('|')[0] + '</div>' : ''}
+          </div>
+          <span style="font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;background:#fff7ed;color:#f5a623;white-space:nowrap;">Uitgifte</span>
+        </div>
+        <button onclick="openUitgifte('${car.id}')" style="width:100%;padding:11px;background:#0d1f4e;color:white;border:none;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;">
+          <i class="ti ti-clipboard-check" style="font-size:15px"></i> Uitgifte rapport invullen
+        </button>
+      </div>`).join('');
+  }
+
+  if (klaarInname.length > 0) {
+    html += '<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#dc2626;margin-bottom:8px;margin-top:' + (klaarUitgifte.length > 0 ? '16px' : '0') + ';">🔄 Klaar voor inname</div>';
+    html += klaarInname.map(car => `
+      <div style="background:#fff;border:0.5px solid #e2e8f0;border-radius:14px;padding:14px;margin-bottom:8px;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">
+          <div>
+            <div style="font-size:16px;font-weight:600;color:#0f172a;">${car.plate}</div>
+            <div style="font-size:12px;color:#64748b;">${car.model||''} · ${car.klant||'Geen klant'}</div>
+            ${car.manager ? '<div style="font-size:11px;color:#64748b;margin-top:2px;">👤 ' + car.manager.split('|')[0] + '</div>' : ''}
+            ${car.uitgifteDatum ? '<div style="font-size:11px;color:#64748b;margin-top:2px;">Uitgifte: ' + fmtDate(car.uitgifteDatum) + ' · ' + (car.uitgifteKm||'?') + ' km</div>' : ''}
+          </div>
+          <span style="font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;background:#fef2f2;color:#dc2626;white-space:nowrap;">Inname</span>
+        </div>
+        <button onclick="openInname('${car.id}')" style="width:100%;padding:11px;background:#dc2626;color:white;border:none;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;">
+          <i class="ti ti-clipboard-check" style="font-size:15px"></i> Inname rapport invullen
+        </button>
+      </div>`).join('');
+  }
+
+  list.innerHTML = html;
+}
+
+// Override showScreen for uitgifte user - back goes to portal
+const _origShowScreen = showScreen;
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('install-banner').style.display = 'none';
+  toast('✅ App toegevoegd aan beginscherm!');
+});
+
+// Show iOS tip automatically after a short delay if not installed
+setTimeout(() => {
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone;
+  const params = new URLSearchParams(window.location.search);
+  if (isIOS && !isStandalone && params.get('car') && !sessionStorage.getItem('ios-tip-shown')) {
+    sessionStorage.setItem('ios-tip-shown', '1');
+    const banner = document.getElementById('install-banner');
+    if (banner) banner.style.display = 'flex';
+  }
+}, 3000);
+</script>
+</body>
+</html>
