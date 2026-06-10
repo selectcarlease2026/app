@@ -1623,23 +1623,14 @@ async function doSlimLogin(){
   var pwEl = document.getElementById('login-pw');
   var errEl = document.getElementById('login-error');
   var btn = document.getElementById('login-btn');
-  if (!input || !pwEl || !btn) { alert('Pagina fout - herlaad de pagina'); return; }
-  
+  if (!input || !pwEl || !btn) { alert('Herlaad de pagina (F5)'); return; }
   var inputVal = input.value.trim();
   var pw = pwEl.value;
-  
   errEl.style.display = 'none';
-  if (!inputVal || !pw) {
-    errEl.textContent = 'Vul uw gegevens in.';
-    errEl.style.display = 'block';
-    return;
-  }
-  
-  btn.textContent = 'Bezig...';
-  btn.disabled = true;
-  
+  if (!inputVal || !pw) { errEl.textContent = 'Vul uw gegevens in.'; errEl.style.display = 'block'; return; }
+  btn.textContent = 'Bezig...'; btn.disabled = true;
   try {
-    // Admin check
+    // Admin check - geen internet nodig
     var ADMINS = {'Denny':{pw:'Admin3446',role:'super'},'Mandy':{pw:'Select2026',role:'aanmaak'},'Mohamed':{pw:'Select2026',role:'aanmaak'},'Giel':{pw:'Select2026',role:'aanmaak'},'uitgifte':{pw:'Select2026',role:'uitgifte'}};
     if (ADMINS[inputVal] && ADMINS[inputVal].pw === pw) {
       var role = ADMINS[inputVal].role;
@@ -1647,50 +1638,46 @@ async function doSlimLogin(){
       localStorage.setItem('scl_role', role);
       sessionStorage.setItem('scl_user', inputVal);
       sessionStorage.setItem('scl_role', role);
-      try { await loadCarsFromDB(); } catch(e) { console.warn('loadCarsFromDB fout:', e); }
+      try { await loadCarsFromDB(); } catch(dbErr) { console.warn('DB laad fout (niet kritiek):', dbErr); cars = cars || []; }
       loginNaarJuistScherm(inputVal, role);
-      btn.textContent = 'Inloggen';
-      btn.disabled = false;
+      btn.textContent = 'Inloggen'; btn.disabled = false;
       return;
     }
-    
-    // Klant check via Supabase
+    // Klant login via Supabase
     var em = inputVal.toLowerCase().trim();
     var res = await fetch(SUPA_URL + '/auth/v1/token?grant_type=password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'apikey': SUPA_KEY },
       body: JSON.stringify({ email: em, password: pw })
     });
+    if (!res.ok && res.status !== 400) {
+      errEl.textContent = 'Verbindingsfout met de server (status ' + res.status + '). Probeer opnieuw.';
+      errEl.style.display = 'block';
+      btn.textContent = 'Inloggen'; btn.disabled = false;
+      return;
+    }
     var data = await res.json();
-    
     if (data.access_token) {
+      var em2 = em;
       localStorage.setItem('klant_token', data.access_token);
-      localStorage.setItem('klant_email', em);
+      localStorage.setItem('klant_email', em2);
       sessionStorage.setItem('klant_token', data.access_token);
-      sessionStorage.setItem('klant_email', em);
-      try { await loadCarsFromDB(); } catch(e) { console.warn('loadCarsFromDB fout:', e); }
-      var car = cars.find(function(c) { return c.klantEmail && c.klantEmail === em; });
-      if (car) {
-        loadCarApp(car);
-        showScreen('screen-app');
-      } else {
-        errEl.textContent = 'Geen leaseauto gevonden voor dit e-mailadres. Bel 0348-467657';
-        errEl.style.display = 'block';
-      }
+      sessionStorage.setItem('klant_email', em2);
+      try { await loadCarsFromDB(); } catch(e2) { console.warn('DB fout:', e2); }
+      var car = cars.find(function(c){ return c.klantEmail && c.klantEmail === em2; });
+      if (car) { loadCarApp(car); showScreen('screen-app'); }
+      else { errEl.textContent = 'Geen leaseauto gevonden. Bel 0348-467657'; errEl.style.display = 'block'; }
     } else {
-      errEl.textContent = (data.error_description || data.msg || 'Onjuiste inloggegevens. Probeer opnieuw.');
+      errEl.textContent = data.error_description || data.msg || 'Onjuiste inloggegevens.';
       errEl.style.display = 'block';
     }
   } catch(e) {
     console.error('Login fout:', e);
-    errEl.textContent = 'Verbindingsfout. Controleer internet en probeer opnieuw.';
+    errEl.textContent = 'Fout: ' + (e.message || 'Onbekende fout') + '. Herlaad de pagina en probeer opnieuw.';
     errEl.style.display = 'block';
   }
-  
-  btn.textContent = 'Inloggen';
-  btn.disabled = false;
+  btn.textContent = 'Inloggen'; btn.disabled = false;
 }
-
 
 function loginNaarJuistScherm(user,role){
   if(role==='uitgifte'){renderUitgiftePortal();showScreen('screen-uitgifte-portal');}
