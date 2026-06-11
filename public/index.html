@@ -1616,83 +1616,955 @@ async function loadCarByID(id) {
 }
 
 // STORAGE (now uses Supabase)
-// ===== GECOMBINEERD LOGIN =====
-var ADMIN_USERS = {'Denny':{pw:'Admin3446',role:'super'},'Mandy':{pw:'Select2026',role:'aanmaak'},'Mohamed':{pw:'Select2026',role:'aanmaak'},'Giel':{pw:'Select2026',role:'aanmaak'},'uitgifte':{pw:'Select2026',role:'uitgifte'}};
+async function load() {
+  const params = new URLSearchParams(window.location.search);
+  const klantToken = sessionStorage.getItem('klant_token');
+  const klantEmailSaved = sessionStorage.getItem('klant_email');
 
-async function doSlimLogin() {
-  var inp = document.getElementById('login-input');
-  var pwe = document.getElementById('login-pw');
-  var err = document.getElementById('login-error');
-  var btn = document.getElementById('login-btn');
-  if (!inp||!pwe||!btn) { alert('Herlaad de pagina'); return; }
-  var v = inp.value.trim(), pw = pwe.value;
-  err.style.display = 'none';
-  if (!v||!pw) { err.textContent='Vul uw gegevens in.'; err.style.display='block'; return; }
-  btn.textContent='Bezig...'; btn.disabled=true;
-  try {
-    if (ADMIN_USERS[v] && ADMIN_USERS[v].pw===pw) {
-      localStorage.setItem('scl_admin','1'); localStorage.setItem('scl_user',v); localStorage.setItem('scl_role',ADMIN_USERS[v].role);
-      sessionStorage.setItem('scl_admin','1'); sessionStorage.setItem('scl_user',v); sessionStorage.setItem('scl_role',ADMIN_USERS[v].role);
-      try { await loadCarsFromDB(); } catch(e) { if(!window.cars) window.cars=[]; }
-      var role = ADMIN_USERS[v].role;
-      if (role==='uitgifte') { renderUitgiftePortal(); showScreen('screen-uitgifte-portal'); }
-      else { renderCarList(); showScreen('screen-admin'); var el=document.getElementById('admin-username'); if(el) el.textContent=v; }
-      btn.textContent='Inloggen'; btn.disabled=false; return;
-    }
-    var em = v.toLowerCase().trim();
-    var res = await fetch(SUPA_URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPA_KEY},body:JSON.stringify({email:em,password:pw})});
-    var data = await res.json();
-    if (data.access_token) {
-      localStorage.setItem('klant_token',data.access_token); localStorage.setItem('klant_email',em);
-      sessionStorage.setItem('klant_token',data.access_token); sessionStorage.setItem('klant_email',em);
-      try { await loadCarsFromDB(); } catch(e) { if(!window.cars) window.cars=[]; }
-      var car = cars.find(function(c){ return c.klantEmail && c.klantEmail===em; });
-      if (car) { loadCarApp(car); showScreen('screen-app'); }
-      else { err.textContent='Geen leaseauto gevonden. Bel 0348-467657'; err.style.display='block'; }
+  // Already logged in as klant?
+  if (klantToken && klantEmailSaved && !params.get('beheer')) {
+    await loadCarsFromDB();
+    const car = cars.find(c => c.klantEmail && c.klantEmail.toLowerCase() === klantEmailSaved.toLowerCase());
+    if (car) { loadCarApp(car); showScreen('screen-app'); return; }
+  }
+
+  if (params.get('beheer')) {
+    // Beheer toegang
+    const loggedIn = sessionStorage.getItem('scl_admin');
+    const loggedUser = sessionStorage.getItem('scl_user');
+    if (loggedIn === '1' && loggedUser) {
+      await loadCarsFromDB();
+      if (loggedUser === 'uitgifte') {
+        renderUitgiftePortal();
+        showScreen('screen-uitgifte-portal');
+      } else {
+        renderCarList();
+        showScreen('screen-admin');
+        const unEl = document.getElementById('admin-username');
+        if (unEl) unEl.textContent = '👤 ' + (loggedUser||'');
+      }
     } else {
-      err.textContent = data.error_description || 'Onjuiste inloggegevens.';
-      err.style.display = 'block';
+      showScreen('screen-login');
     }
-  } catch(e) { err.textContent='Fout: '+(e.message||'onbekend'); err.style.display='block'; }
-  btn.textContent='Inloggen'; btn.disabled=false;
+  } else {
+    showScreen('screen-klant-login');
+  }
+}
+
+function togglePw() {
+  const input = document.getElementById('login-pw');
+  const eye = document.getElementById('pw-eye');
+  if (input.type === 'password') {
+    input.type = 'text';
+    eye.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    eye.textContent = '👁';
+  }
 }
 
 
-async function load() {
-  // Herstel admin sessie vanuit localStorage
-  var sAdmin = localStorage.getItem('scl_admin');
-  var sUser = localStorage.getItem('scl_user');
-  var sRole = localStorage.getItem('scl_role');
-  if (sAdmin==='1' && sUser) {
-    sessionStorage.setItem('scl_admin','1');
-    sessionStorage.setItem('scl_user',sUser);
-    sessionStorage.setItem('scl_role',sRole||'super');
+
+function adminLogout() {
+  sessionStorage.removeItem('scl_admin');
+  sessionStorage.removeItem('scl_user');
+  showScreen('screen-login');
+}
+
+function fmtDate(s) {
+  if (!s) return '—';
+  const d = new Date(s);
+  if (isNaN(d)) return s;
+  return d.toLocaleDateString('nl-NL', {day:'2-digit',month:'2-digit',year:'numeric'});
+}
+function daysLeft(s) { return Math.ceil((new Date(s) - new Date()) / 86400000); }
+
+// URL PARAM — open directly into car app
+async function checkURLParam() {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('car');
+  if (id) {
+    const car = await loadCarByID(id);
+    if (car) {
+      loadCarApp(car);
+      showScreen('screen-app');
+      // Hide back to admin button for real QR scans
+      const btn = document.getElementById('back-to-admin-btn');
+      if (btn) btn.style.display = 'none';
+    } else {
+      showScreen('screen-blocked');
+    }
   }
-  // Check klant sessie
-  var kToken = localStorage.getItem('klant_token');
-  var kEmail = localStorage.getItem('klant_email');
-  if (kToken && kEmail) {
-    try {
-      await loadCarsFromDB();
-      var car = cars.find(function(c){ return c.klantEmail && c.klantEmail===kEmail; });
-      if (car) { loadCarApp(car); showScreen('screen-app'); return; }
-    } catch(e) {}
-    localStorage.removeItem('klant_token'); localStorage.removeItem('klant_email');
+}
+
+// SCREENS
+function showScreen(id) {
+  document.querySelectorAll('.screen, .success-page').forEach(s => {
+    s.classList.remove('active');
+    s.style.display = 'none';
+  });
+  const el = document.getElementById(id);
+  if (el) {
+    el.classList.add('active');
+    // Login and lang screens need flex, others need flex column
+    if (id === 'screen-login' || id === 'screen-lang') {
+      el.style.display = 'flex';
+    } else {
+      el.style.display = 'flex';
+    }
   }
-  // Check admin sessie
-  var loggedIn = sessionStorage.getItem('scl_admin');
-  var loggedUser = sessionStorage.getItem('scl_user');
-  var loggedRole = sessionStorage.getItem('scl_role') || 'super';
-  if (loggedIn==='1' && loggedUser) {
-    try { await loadCarsFromDB(); } catch(e) { if(!window.cars) window.cars=[]; }
-    if (loggedRole==='uitgifte') { renderUitgiftePortal(); showScreen('screen-uitgifte-portal'); }
-    else { renderCarList(); showScreen('screen-admin'); var el=document.getElementById('admin-username'); if(el) el.textContent=loggedUser; }
+  window.scrollTo(0,0);
+}
+function showAppScreen(id) {
+  document.querySelectorAll('.screen, .success-page').forEach(function(s) {
+    s.classList.remove('active');
+    s.style.display = 'none';
+  });
+  const el = document.getElementById(id);
+  if (el) {
+    el.classList.add('active');
+    el.style.display = 'flex';
+  }
+  // Show back button on lang screen when coming from app
+  const langBack = document.getElementById('lang-back-btn');
+  if (langBack) langBack.style.display = id === 'screen-lang' ? 'block' : 'none';
+  window.scrollTo(0,0);
+
+  // Autofill verzekering A when opening tegenpartij form
+  if (id === 'screen-schade-tegenpartij') {
+    const car = cars.find(c => c.id === currentCarId);
+    if (car) {
+      const kEl = document.getElementById('s-kenteken-a');
+      if (kEl && !kEl.value) kEl.value = car.plate || '';
+      const vEl = document.getElementById('s-verz-a');
+      if (vEl && !vEl.value) vEl.value = car.insurer || '';
+      const pEl = document.getElementById('s-polis-a');
+      if (pEl && !pEl.value) pEl.value = car.policy || '';
+      const gkEl = document.getElementById('s-gk-a');
+      if (gkEl && !gkEl.value) gkEl.value = car.policy || '';
+      const vanEl = document.getElementById('s-gk-van');
+      if (vanEl && !vanEl.value) vanEl.value = car.insFrom || '';
+      const totEl = document.getElementById('s-gk-tot');
+      if (totEl && !totEl.value) totEl.value = car.insTo || '';
+      const klantEl = document.getElementById('s-best-voornaam');
+      if (klantEl && !klantEl.value && car.klant) {
+        const parts = car.klant.split(' ');
+        klantEl.value = parts[0] || '';
+        const achternaamEl = document.getElementById('s-naam');
+        if (achternaamEl && !achternaamEl.value) achternaamEl.value = parts.slice(1).join(' ') || '';
+      }
+    }
+  }
+}
+
+// TOAST
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// CAR LIST
+function renderCarList() {
+  const list = document.getElementById('car-list');
+  const noCars = document.getElementById('no-cars');
+  document.getElementById('car-count').textContent = cars.length;
+  if (cars.length === 0) { list.innerHTML=''; noCars.style.display='block'; return; }
+  noCars.style.display='none';
+  list.innerHTML = cars.map(car => {
+    const dl = daysLeft(car.contract);
+    const badgeTxt = dl < 0 ? 'Verlopen' : dl < 60 ? `${dl}d` : 'Actief';
+    const badgeCls = dl < 0 ? 'badge-danger' : dl < 60 ? 'badge-warn' : 'badge-ok';
+    return `<div class="car-card">
+      <div class="car-card-body">
+        <div class="car-card-info">
+          <div class="car-card-top">
+            <div class="car-plate">${car.plate}</div>
+            <span class="badge ${badgeCls}">${badgeTxt}</span>
+          </div>
+          <div class="car-model">${car.model} · ${car.year} · ${car.fuel}</div>
+          <div class="car-card-actions">
+            <button class="btn-sm" onclick="editCar('${car.id}')">✏️ Bewerken</button>
+            <button class="btn-sm" onclick="previewCarById('${car.id}')">📱 Preview</button>
+            ${car.klantEmail ? '<button class=\"btn-sm\" style=\"background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;\" id=\"invite-btn-${car.id}\" onclick=\"uitnodigingSturen(\'${car.id}\')\">📧 Uitnodiging</button>' : ''}
+<button class="btn-sm" style="background:#f0fdf4;color:#15803d;border-color:#bbf7d0;" onclick="openUitgifte('${car.id}')">📋 Uitgifte</button>
+            ${car.uitgifteDatum ? '<button class=\"btn-sm\" style=\"background:#fef2f2;color:#dc2626;border-color:#fecaca;\" onclick=\"openInname(\'${car.id}\')\">📋 Inname</button>' : ''}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// NEW / EDIT
+function newCar() {
+  editingId = null;
+  uploadedFiles = { groene: null, kenteken: null };
+  document.getElementById('edit-title').textContent = 'Nieuwe auto toevoegen';
+  document.getElementById('delete-btn').style.display = 'none';
+  ['e-plate','e-year','e-model','e-color','e-contract','e-apk','e-insurer','e-policy','e-cover','e-ins-from','e-ins-to'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const insurerEl = document.getElementById('e-insurer');
+  if (insurerEl) insurerEl.value = 'Loxo / Meijers Assurantiën';
+  const policyEl = document.getElementById('e-policy');
+  if (policyEl) policyEl.value = 'ZWAKA/6C4E8EW';
+  document.getElementById('e-fuel').value = 'Benzine';
+  ['groene','kenteken'].forEach(k => { document.getElementById('up-'+k).style.display='none'; });
+  showScreen('screen-edit');
+}
+
+function editCar(id) {
+  const car = cars.find(c => c.id === id);
+  if (!car) return;
+  editingId = id;
+  uploadedFiles = { groene: car.fileGroene || null, kenteken: car.fileKenteken || null };
+  document.getElementById('edit-title').textContent = `Bewerken: ${car.plate}`;
+  document.getElementById('delete-btn').style.display = 'block';
+  document.getElementById('e-plate').value = car.plate;
+  document.getElementById('e-klant').value = car.klant || '';
+  if(document.getElementById('e-klant-email')) document.getElementById('e-klant-email').value = car.klantEmail || '';
+  if(document.getElementById('e-klant-tel')) document.getElementById('e-klant-tel').value = car.klantTel || '';
+  document.getElementById('e-manager').value = car.manager || '';
+  document.getElementById('e-active').value = car.active !== undefined ? car.active : '1';
+  document.getElementById('e-year').value = car.year;
+  document.getElementById('e-model').value = car.model;
+  document.getElementById('e-color').value = car.color;
+  document.getElementById('e-fuel').value = car.fuel;
+  document.getElementById('e-contract').value = car.contract;
+  document.getElementById('e-apk').value = car.apk;
+  document.getElementById('e-insurer').value = car.insurer || 'Loxo / Meijers Assurantiën';
+  document.getElementById('e-policy').value = car.policy || 'ZWAKA/6C4E8EW';
+  document.getElementById('e-cover').value = car.cover;
+  document.getElementById('e-ins-from').value = car.insFrom;
+  document.getElementById('e-ins-to').value = car.insTo;
+  if (car.fileGroene) { document.getElementById('up-groene-name').textContent = car.fileGreeneName||'groenekaart'; document.getElementById('up-groene').style.display='block'; }
+  else document.getElementById('up-groene').style.display='none';
+  if (car.fileKenteken) { document.getElementById('up-kenteken-name').textContent = car.fileKentekenName||'kentekenkaart'; document.getElementById('up-kenteken').style.display='block'; }
+  else document.getElementById('up-kenteken').style.display='none';
+  showScreen('screen-edit');
+}
+
+async function handleUpload(type, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const maxMB = 10;
+  if (file.size > maxMB * 1024 * 1024) { toast('⚠️ Bestand is groter dan 10MB'); return; }
+  const plate = document.getElementById('e-plate').value.trim().toUpperCase() || 'auto';
+  const ext = file.name.split('.').pop().toLowerCase();
+  const path = plate + '/' + type + '-' + Date.now() + '.' + ext;
+  document.getElementById('up-' + type + '-name').textContent = 'Bezig met uploaden...';
+  document.getElementById('up-' + type).style.display = 'block';
+  try {
+    const res = await fetch('https://kqstoxqegsngqkylnfkv.supabase.co/storage/v1/object/documents/' + path, {
+      method: 'POST',
+      headers: {
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtxc3RveHFlZ3NuZ3FreWxuZmt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMjk2NTYsImV4cCI6MjA5MzgwNTY1Nn0.Crc5id3NpM_FWp5J35hgSHSW3pJB-3bhDT-0LZk41ng',
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtxc3RveHFlZ3NuZ3FreWxuZmt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMjk2NTYsImV4cCI6MjA5MzgwNTY1Nn0.Crc5id3NpM_FWp5J35hgSHSW3pJB-3bhDT-0LZk41ng',
+        'Content-Type': file.type,
+        'Cache-Control': '3600',
+        'x-upsert': 'true'
+      },
+      body: file
+    });
+    if (!res.ok) { const err = await res.text(); throw new Error(err); }
+    const publicUrl = 'https://kqstoxqegsngqkylnfkv.supabase.co/storage/v1/object/public/documents/' + path;
+    uploadedFiles[type] = publicUrl;
+    uploadedFiles[type + 'Name'] = file.name;
+    if (type === 'groene') uploadedFiles.groeneName = file.name;
+    if (type === 'kenteken') uploadedFiles.kentekenName = file.name;
+    document.getElementById('up-' + type + '-name').textContent = file.name;
+    toast('✅ ' + file.name + ' geüpload!');
+  } catch(e) {
+    console.error(e);
+    document.getElementById('up-' + type).style.display = 'none';
+    toast('❌ Upload mislukt: ' + e.message);
+  }
+}
+
+async function saveCar() {
+  const plate = document.getElementById('e-plate').value.trim().toUpperCase();
+  const model = document.getElementById('e-model').value.trim();
+  if (!plate) { toast('⚠️ Stap 1: Vul het kenteken in'); return; }
+  if (!model) { toast('⚠️ Stap 1: Vul merk & model in'); return; }
+  const klantEmailVal = document.getElementById('e-klant-email') ? document.getElementById('e-klant-email').value.trim() : '';
+  if (!klantEmailVal) { toast('⚠️ Stap 2: E-mailadres van de klant is verplicht!'); return; }
+  const contractVal = document.getElementById('e-contract') ? document.getElementById('e-contract').value : '';
+  if (!contractVal) { toast('⚠️ Stap 3: Vul de contractdatum in'); return; }
+  const car = {
+    id: editingId || (Date.now().toString(36) + Math.random().toString(36).slice(2,8)),
+    plate, model,
+    klant: document.getElementById('e-klant').value,
+    klantEmail: document.getElementById('e-klant-email') ? document.getElementById('e-klant-email').value : '',
+    klantTel: document.getElementById('e-klant-tel') ? document.getElementById('e-klant-tel').value : '',
+    manager: document.getElementById('e-manager').value,
+    active: document.getElementById('e-active').value,
+    year: document.getElementById('e-year').value,
+    color: document.getElementById('e-color').value,
+    fuel: document.getElementById('e-fuel').value,
+    contract: document.getElementById('e-contract').value,
+    apk: document.getElementById('e-apk').value,
+    insurer: document.getElementById('e-insurer').value,
+    policy: document.getElementById('e-policy').value,
+    cover: document.getElementById('e-cover').value,
+    insFrom: document.getElementById('e-ins-from').value,
+    insTo: document.getElementById('e-ins-to').value,
+    fileGroene: uploadedFiles.groene || null,
+    fileGreeneName: uploadedFiles.groeneName || null,
+    fileKenteken: uploadedFiles.kenteken || null,
+    fileKentekenName: uploadedFiles.kentekenName || null,
+  };
+  const btn = document.querySelector('.save-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '💾 Bezig met opslaan...'; }
+  try {
+    await saveCarToDB(car);
+    if (editingId) { const i = cars.findIndex(c => c.id === editingId); cars[i] = car; }
+    else cars.push(car);
+    renderCarList();
+    toast('✅ Opgeslagen!');
+    renderCarList();
+    // Auto send invitation if email filled
+    if (car.klantEmail) {
+      setTimeout(() => uitnodigingSturen(car.id), 500);
+    }
+    showScreen('screen-admin');
+  } catch(e) {
+    toast('❌ Opslaan mislukt, probeer opnieuw');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Auto opslaan'; }
+  }
+}
+
+async function deleteCar() {
+  if (!editingId) return;
+  if (!confirm('Weet je zeker dat je dit voertuig wilt verwijderen?')) return;
+  try {
+    await deleteCarFromDB(editingId);
+    cars = cars.filter(c => c.id !== editingId);
+    renderCarList();
+    toast('Voertuig verwijderd');
+    showScreen('screen-admin');
+  } catch(e) { toast('❌ Verwijderen mislukt'); }
+}
+
+// QR CODE
+let qrCurrentId = null;
+async function showQR(id) {
+  const car = cars.find(c => c.id === id);
+  if (!car) return;
+  qrCurrentId = id;
+  document.getElementById('qr-plate-title').textContent = car.plate;
+  document.getElementById('qr-modal').classList.add('active');
+  const img = document.getElementById('qr-img');
+  const appUrl = window.location.origin + window.location.pathname + '?car=' + car.id;
+  document.getElementById('qr-url-text').textContent = appUrl;
+
+  if (car.qrUrl) {
+    img.src = car.qrUrl;
     return;
   }
-  var savedLang = localStorage.getItem('scl_lang') || sessionStorage.getItem('scl_lang');
-  if (savedLang) lang = savedLang;
-  showScreen('screen-klant-login');
+
+  // Generate and save QR for first time
+  const qrApiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=10&data=' + encodeURIComponent(appUrl);
+  img.src = qrApiUrl;
+
+  // Save QR url to Supabase so it stays the same forever
+  try {
+    car.qrUrl = qrApiUrl;
+    const i = cars.findIndex(c => c.id === id);
+    if (i >= 0) cars[i] = car;
+    await fetch('https://kqstoxqegsngqkylnfkv.supabase.co/rest/v1/cars?id=eq.' + id, {
+      method: 'PATCH',
+      headers: {
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtxc3RveHFlZ3NuZ3FreWxuZmt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMjk2NTYsImV4cCI6MjA5MzgwNTY1Nn0.Crc5id3NpM_FWp5J35hgSHSW3pJB-3bhDT-0LZk41ng',
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtxc3RveHFlZ3NuZ3FreWxuZmt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyMjk2NTYsImV4cCI6MjA5MzgwNTY1Nn0.Crc5id3NpM_FWp5J35hgSHSW3pJB-3bhDT-0LZk41ng',
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ qr_url: qrApiUrl })
+    });
+  } catch(e) { console.error('QR save error', e); }
 }
+
+function downloadQR() {
+  const car = cars.find(c => c.id === qrCurrentId);
+  const img = document.getElementById('qr-img');
+  const plateName = car ? car.plate.replace(/[^a-zA-Z0-9]/g,'') : 'auto';
+  // Open in new tab so user can save it
+  const w = window.open(img.src, '_blank');
+  if (!w) {
+    const a = document.createElement('a');
+    a.href = img.src;
+    a.download = 'qr-' + plateName + '.png';
+    a.click();
+  }
+  toast('QR code openen — druk lang om op te slaan');
+}
+
+function previewCar() {
+  closeModal();
+  const car = cars.find(c => c.id === qrCurrentId);
+  if (car) { loadCarApp(car); showScreen('screen-app'); }
+}
+
+function previewCarById(id) {
+  const car = cars.find(c => c.id === id);
+  if (car) {
+    loadCarApp(car);
+    showScreen('screen-app');
+    // Show back to admin button
+    const btn = document.getElementById('back-to-admin-btn');
+    if (btn) btn.style.display = 'inline-flex';
+  }
+}
+
+function backToAdmin() {
+  const btn = document.getElementById('back-to-admin-btn');
+  if (btn) btn.style.display = 'none';
+  showScreen('screen-admin');
+}
+
+function closeModal() { document.getElementById('qr-modal').classList.remove('active'); }
+
+// LOAD CAR INTO APP
+function loadCarApp(car) {
+  if (car.active === '0') {
+    showScreen('screen-blocked');
+    return;
+  }
+  currentCarId = car.id;
+  const naam = car.klant ? car.klant.split(' ')[0] : '';
+  const welcomeNameEl = document.getElementById('a-welcome-name'); if(welcomeNameEl) welcomeNameEl.textContent = naam ? naam + '!' : ''; applyTranslations();
+  document.getElementById('a-plate').textContent = car.plate;
+  document.getElementById('a-plate2').textContent = car.plate;
+  document.getElementById('a-model').textContent = `${car.model} · ${car.year} · ${car.color}`;
+  document.getElementById('a-model2').textContent = car.model;
+  document.getElementById('a-year').textContent = car.year;
+  document.getElementById('a-fuel').textContent = car.fuel;
+  document.getElementById('a-color').textContent = car.color;
+  document.getElementById('a-contract').textContent = fmtDate(car.contract);
+  const dl = daysLeft(car.contract);
+  document.getElementById('a-status').textContent = dl < 0 ? 'Contract verlopen' : dl < 60 ? `Verloopt over ${dl} dagen` : 'Leasecontract actief';
+  const insDl = daysLeft(car.insTo);
+  const b = document.getElementById('a-ins-badge');
+  b.textContent = insDl < 0 ? 'Verlopen' : insDl < 30 ? 'Verloopt binnenkort' : 'Geldig';
+  b.className = 'badge ' + (insDl < 0 ? 'badge-danger' : insDl < 30 ? 'badge-warn' : 'badge-ok');
+  document.getElementById('a-ins-sub').textContent = `${car.insurer} · t/m ${fmtDate(car.insTo)}`;
+
+  // Manager contact button
+  const managerDiv = document.getElementById('manager-contact');
+  if (managerDiv) {
+    if (car.manager) {
+      const parts = car.manager.split('|');
+      const mNaam = parts[0] || '';
+      const mTel = (parts[1] || '').replace(/-/g,'');
+      const waNum = '31' + mTel.replace(/^0/,'');
+      let html = '<div style="background:#f1f5f9;border:0.5px solid #e2e8f0;border-radius:10px;padding:12px 14px;">';
+      html += '<div style="font-size:11px;color:#64748b;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">Uw accountmanager</div>';
+      html += '<div style="font-size:14px;font-weight:500;color:#0f172a;margin-bottom:10px;">' + mNaam + '</div>';
+      html += '<div style="display:flex;flex-direction:column;gap:7px;">';
+      if (mTel) {
+        html += '<button onclick="window.location.href=\'tel:' + mTel + '\'" style="width:100%;padding:10px;background:#0d1f4e;color:white;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;"><i class=\"ti ti-phone\" style=\"font-size:14px\"></i>&nbsp;Bel ' + mNaam + '</button>';
+        html += '<button onclick="window.open(\'https://wa.me/' + waNum + '\',\'_blank\')" style="width:100%;padding:10px;background:#25D366;color:white;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;"><i class=\"ti ti-brand-whatsapp\" style=\"font-size:14px\"></i>&nbsp;WhatsApp ' + mNaam + '</button>';
+      }
+      html += '</div></div>';
+      managerDiv.innerHTML = html;
+      managerDiv.style.display = 'block';
+    } else {
+      managerDiv.style.display = 'none';
+    }
+  }
+
+    // Contract warning
+  const contractDays = daysLeft(car.contract);
+  const contractBar = document.getElementById('warn-contract');
+  if (contractDays >= 0 && contractDays <= 60) {
+    document.getElementById('warn-contract-txt').textContent = `Nog ${contractDays} dagen geldig — neem contact op met Select Car Lease.`;
+    contractBar.style.display = 'flex';
+  } else {
+    contractBar.style.display = 'none';
+  }
+
+  // APK warning
+  const apkDays = daysLeft(car.apk);
+  const apkBar = document.getElementById('warn-apk');
+  if (apkDays >= 0 && apkDays <= 60) {
+    document.getElementById('warn-apk-txt').textContent = `APK verloopt over ${apkDays} dagen — bel 0348-467657 voor een afspraak.`;
+    apkBar.style.display = 'flex';
+  } else {
+    apkBar.style.display = 'none';
+  }
+}
+
+// DOC VIEWER
+function showDoc(type) {
+  const car = cars.find(c => c.id === currentCarId);
+  if (!car) { toast('⚠️ Geen auto geladen, scan de QR code opnieuw'); return; }
+  const isGroene = type === 'kenteken' ? false : true;
+  document.getElementById('doc-title').textContent = isGroene ? 'Groene kaart' : 'Kentekenkaart';
+  const viewer = document.getElementById('doc-file-viewer');
+  const fileData = isGroene ? (car.fileGroene || null) : (car.fileKenteken || null);
+  const docLabel = isGroene ? 'groenekaart' : 'kentekenkaart';
+  const existing = document.getElementById('doc-dl-btn');
+  if (existing) existing.remove();
+  if (fileData) {
+    const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(fileData) || fileData.startsWith('data:image');
+    const isPDF = /\.pdf$/i.test(fileData) || fileData.startsWith('data:application/pdf');
+    const carObj = cars.find(c => c.id === currentCarId) || {};
+    const fname = docLabel + '-' + (carObj.plate||'document').replace(/[^a-zA-Z0-9]/g,'') + (isPDF ? '.pdf' : '.jpg');
+    if (isImage) {
+      viewer.innerHTML = `<img src="${fileData}" alt="${isGroene ? 'Groene kaart' : 'Kentekenkaart'}" style="width:100%;height:auto;display:block;border-radius:8px;">`;
+    } else {
+      viewer.innerHTML = `<div style="padding:32px 20px;text-align:center;">
+        <div style="font-size:52px;margin-bottom:10px">${isGroene ? '🛡️' : '🪪'}</div>
+        <div style="font-size:15px;font-weight:600;color:#0a1929;margin-bottom:4px">${isGroene ? 'Groene kaart' : 'Kentekenkaart'}</div>
+        <div style="font-size:13px;color:#5a6a7a;">PDF document — tik op download om te openen</div>
+      </div>`;
+    }
+    setTimeout(() => {
+      const existing2 = document.getElementById('doc-dl-btn');
+      if (existing2) existing2.remove();
+      const btn = document.createElement('button');
+      btn.id = 'doc-dl-btn';
+      btn.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;background:#0d1f4e;color:white;border:none;border-radius:12px;font-size:14px;font-weight:500;margin-bottom:12px;font-family:Outfit,sans-serif;cursor:pointer;letter-spacing:0.2px;';
+      btn.innerHTML = '<i class="ti ti-eye" style="font-size:17px" aria-hidden="true"></i> ' + (isImage ? 'Bekijk afbeelding' : 'Bekijk document');
+      btn.onclick = function() {
+        if (isPDF) {
+          // For PDF: open in Google Docs viewer so it shows inline without download prompt
+          const viewer = 'https://docs.google.com/viewer?url=' + encodeURIComponent(fileData) + '&embedded=true';
+          // If it's a data URL (base64), open directly
+          if (fileData.startsWith('data:')) {
+            const w = window.open('', '_blank');
+            if (w) {
+              w.document.write('<html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{margin:0;padding:0;}body{background:#1e293b;}iframe{width:100vw;height:100vh;border:none;}</style></head><body><iframe src="' + fileData + '"></iframe></body></html>');
+              w.document.close();
+            }
+          } else {
+            window.open(fileData, '_blank');
+          }
+        } else {
+          // For images: open directly
+          window.open(fileData, '_blank');
+        }
+      };
+      const fields = document.getElementById('doc-fields');
+      if (fields) fields.parentNode.insertBefore(btn, fields);
+    }, 50);
+  } else {
+    viewer.innerHTML = `<div class="doc-no-file"><span>${isGroene ? '🛡️' : '🪪'}</span><p>Nog geen bestand geüpload door Select Car Lease.</p></div>`;
+  }
+  const fields = document.getElementById('doc-fields');
+  if (isGroene) {
+    fields.innerHTML = [
+      ['Verzekeraar', car.insurer], ['Polisnummer', car.policy],
+      ['Kenteken', car.plate], ['Geldig van', fmtDate(car.insFrom)],
+      ['Geldig tot', fmtDate(car.insTo)], ['Dekking', car.cover],
+      ['Landen', 'Alle EU-landen']
+    ].map(r => `<div class="detail-field"><span class="lbl">${r[0]}</span><span class="val">${r[1]||'—'}</span></div>`).join('');
+  } else {
+    fields.innerHTML = [
+      ['Kenteken', car.plate], ['Merk & model', car.model],
+      ['Bouwjaar', car.year], ['Brandstof', car.fuel],
+      ['Kleur', car.color], ['Tenaamgesteld aan', 'Select Car Lease BV'],
+      ['APK geldig tot', fmtDate(car.apk)]
+    ].map(r => `<div class="detail-field"><span class="lbl">${r[0]}</span><span class="val">${r[1]||'—'}</span></div>`).join('');
+  }
+  showAppScreen('screen-doc');
+}
+
+// SCHADE
+function selectType(el, type) {
+  document.querySelectorAll('.type-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('s-type').value = type;
+  document.getElementById('s-tegenpartij-block').style.display = type === 'tegenpartij' ? 'block' : 'none';
+}
+
+function handlePhotos(input) {
+  const preview = document.getElementById('photo-preview');
+  Array.from(input.files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      img.className = 'photo-thumb';
+      preview.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function submitSchade() {
+  const naam = document.getElementById('s-naam').value;
+  const tel = document.getElementById('s-tel').value;
+  const locatie = document.getElementById('s-locatie').value;
+  if (!naam || !tel || !locatie) { toast('⚠️ Vul naam, telefoon en locatie in'); return; }
+  const car = cars.find(c => c.id === currentCarId) || {};
+  const type = document.getElementById('s-type').value;
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true; btn.textContent = 'Bezig met versturen...';
+  const refNr = 'SCL-' + Math.floor(1000 + Math.random() * 9000);
+  let body = `SCHADEMELDING SELECT CAR LEASE\nReferentie: ${refNr}\nKenteken: ${car.plate||''} (${car.model||''})\nSoort: ${type==='tegenpartij'?'Met tegenpartij':'Zonder tegenpartij'}\n\n--- BESTUURDER ---\nNaam: ${naam}\nTel: ${tel}\nEmail: ${document.getElementById('s-email').value}\nRijbewijs: ${document.getElementById('s-rijbewijs').value}\nDatum: ${document.getElementById('s-datum').value}\nTijd: ${document.getElementById('s-tijd').value}\nLocatie: ${locatie}\nSnelheid: ${document.getElementById('s-snelheid').value} km/u\n\n`;
+  if (type==='tegenpartij') { body+=`--- TEGENPARTIJ ---\nNaam: ${document.getElementById('s-tp-naam').value}\nTel: ${document.getElementById('s-tp-tel').value}\nEmail: ${document.getElementById('s-tp-email').value}\nKenteken: ${document.getElementById('s-tp-kenteken').value}\nVerzekeraar: ${document.getElementById('s-tp-verzekering').value}\nPolisnr: ${document.getElementById('s-tp-polis').value}\n\n`; }
+  body+=`--- OMSTANDIGHEDEN ---\nWeer: ${document.getElementById('s-weer').value}\nWeg: ${document.getElementById('s-weg').value}\nGetuigen: ${document.getElementById('s-getuigen').value}\nPolitie: ${document.getElementById('s-politie').value}\nOmschrijving: ${document.getElementById('s-omschrijving').value}\nSchade aan: ${document.getElementById('s-schade-omschrijving').value}`;
+  const subject = encodeURIComponent(`Schademelding ${car.plate||''} - ${refNr}`);
+  window.location.href = `mailto:schade@selectcarlease.nl?subject=${subject}&body=${encodeURIComponent(body)}`;
+  if(document.getElementById('success-title')) document.getElementById('success-title').textContent = 'Schade ingediend!';
+    if(document.getElementById('success-msg')) document.getElementById('success-msg').textContent = 'Uw schademelding is verstuurd naar Select Car Lease. U ontvangt binnen 1 werkdag een bevestiging.';
+    if(document.getElementById('success-ref')) document.getElementById('success-ref').innerHTML = 'Referentienummer: <strong>' + refNr + '</strong>';
+  setTimeout(() => { showAppScreen('screen-success'); btn.disabled=false; btn.textContent='Schademelding indienen'; }, 1200);
+}
+
+// TRANSLATIONS
+const T = {
+  nl: {
+    welcome: 'WELKOM',
+    documents: 'Documenten',
+    greencard: 'Groene kaart',
+    regcard: 'Kentekenkaart',
+    rdw: 'RDW · officieel kentekenbewijs',
+    valid: 'Geldig',
+    available: 'Beschikbaar',
+    actions: 'Acties',
+    damage: 'Schade melden',
+    damagesub: 'Formulier invullen',
+    maintenance: 'Onderhoud',
+    maintsub: 'Info & instructies',
+    breakdown: 'Pech onderweg',
+    breakdownsub: 'Bel ons direct',
+    lease: 'Leasecontract',
+    leasesub: 'Inleveren of verlengen',
+    carinfo: 'Voertuiginfo',
+    plate: 'Kenteken',
+    model: 'Merk & model',
+    year: 'Bouwjaar',
+    fuel: 'Brandstof',
+    color: 'Kleur',
+    contract: 'Contract t/m',
+    active: 'Leasecontract actief',
+    expires: 'Verloopt over',
+    days: 'dagen',
+    expired: 'Contract verlopen',
+    accountmgr: 'Uw accountmanager',
+    call: 'Bel',
+    whatsapp: 'WhatsApp',
+    contractwarn: 'Leasecontract verloopt binnenkort',
+    apkwarn: 'APK verloopt binnenkort',
+    apkplan: 'APK inplannen via mail',
+    deliver: 'Afspraak inleveren',
+    extend: 'Contract verlengen',
+    greencard_title: 'Internationaal verzekeringsbewijs',
+    greencard_sub: 'Officieel document',
+    kenteken_title: 'Kentekenbewijs RDW',
+    kenteken_sub: 'Officieel document',
+    open_doc: 'Open document',
+    open_pdf: 'Open PDF',
+    insurer: 'Verzekeraar',
+    policy: 'Polisnummer',
+    valid_from: 'Geldig van',
+    valid_to: 'Geldig tot',
+    coverage: 'Dekking',
+    countries: 'Landen',
+    eu: 'Alle EU-landen',
+    registered: 'Tenaamgesteld aan',
+    apk_valid: 'APK geldig tot',
+    damage_party: 'Schade met tegenpartij',
+    damage_party_sub: 'Aanrijding of botsing met iemand anders',
+    damage_self: 'Schade zonder tegenpartij',
+    damage_self_sub: 'Zelf veroorzaakt, bijv. paaltje of stoeprand',
+    submit: 'Schademelding indienen',
+    send: 'Formulier indienen & versturen',
+  },
+  en: {
+    welcome: 'WELCOME',
+    documents: 'Documents',
+    greencard: 'Green card',
+    regcard: 'Registration card',
+    rdw: 'RDW · official registration',
+    valid: 'Valid',
+    available: 'Available',
+    actions: 'Actions',
+    damage: 'Report damage',
+    damagesub: 'Fill in form',
+    maintenance: 'Maintenance',
+    maintsub: 'Info & instructions',
+    breakdown: 'Breakdown',
+    breakdownsub: 'Call us directly',
+    lease: 'Lease contract',
+    leasesub: 'Return or extend',
+    carinfo: 'Vehicle info',
+    plate: 'License plate',
+    model: 'Make & model',
+    year: 'Year',
+    fuel: 'Fuel',
+    color: 'Color',
+    contract: 'Contract until',
+    active: 'Lease contract active',
+    expires: 'Expires in',
+    days: 'days',
+    expired: 'Contract expired',
+    accountmgr: 'Your account manager',
+    call: 'Call',
+    whatsapp: 'WhatsApp',
+    contractwarn: 'Lease contract expiring soon',
+    apkwarn: 'MOT expires soon',
+    apkplan: 'Schedule MOT via email',
+    deliver: 'Schedule return',
+    extend: 'Extend contract',
+    greencard_title: 'International insurance certificate',
+    greencard_sub: 'Official document',
+    kenteken_title: 'Vehicle registration RDW',
+    kenteken_sub: 'Official document',
+    open_doc: 'Open document',
+    open_pdf: 'Open PDF',
+    insurer: 'Insurer',
+    policy: 'Policy number',
+    valid_from: 'Valid from',
+    valid_to: 'Valid to',
+    coverage: 'Coverage',
+    countries: 'Countries',
+    eu: 'All EU countries',
+    registered: 'Registered to',
+    apk_valid: 'MOT valid until',
+    damage_party: 'Damage with third party',
+    damage_party_sub: 'Collision or accident involving someone else',
+    damage_self: 'Damage without third party',
+    damage_self_sub: 'Self-caused, e.g. post or curb',
+    submit: 'Submit damage report',
+    send: 'Submit & send form',
+  },
+  it: {
+    welcome: 'BENVENUTO',
+    documents: 'Documenti',
+    greencard: 'Carta verde',
+    regcard: 'Libretto di circolazione',
+    rdw: 'RDW · documento ufficiale',
+    valid: 'Valido',
+    available: 'Disponibile',
+    actions: 'Azioni',
+    damage: 'Segnala danno',
+    damagesub: 'Compila il modulo',
+    maintenance: 'Manutenzione',
+    maintsub: 'Info & istruzioni',
+    breakdown: 'Guasto',
+    breakdownsub: 'Chiamaci direttamente',
+    lease: 'Contratto di leasing',
+    leasesub: 'Restituire o rinnovare',
+    carinfo: 'Info veicolo',
+    plate: 'Targa',
+    model: 'Marca & modello',
+    year: 'Anno',
+    fuel: 'Carburante',
+    color: 'Colore',
+    contract: 'Contratto fino al',
+    active: 'Contratto di leasing attivo',
+    expires: 'Scade tra',
+    days: 'giorni',
+    expired: 'Contratto scaduto',
+    accountmgr: 'Il tuo account manager',
+    call: 'Chiama',
+    whatsapp: 'WhatsApp',
+    contractwarn: 'Il contratto di leasing scade presto',
+    apkwarn: 'La revisione scade presto',
+    apkplan: 'Pianifica la revisione via email',
+    deliver: 'Prenota la restituzione',
+    extend: 'Rinnova il contratto',
+    greencard_title: 'Certificato internazionale di assicurazione',
+    greencard_sub: 'Documento ufficiale',
+    kenteken_title: 'Libretto di circolazione RDW',
+    kenteken_sub: 'Documento ufficiale',
+    open_doc: 'Apri documento',
+    open_pdf: 'Apri PDF',
+    insurer: 'Assicuratore',
+    policy: 'Numero di polizza',
+    valid_from: 'Valido dal',
+    valid_to: 'Valido fino al',
+    coverage: 'Copertura',
+    countries: 'Paesi',
+    eu: 'Tutti i paesi UE',
+    registered: 'Intestato a',
+    apk_valid: 'Revisione valida fino al',
+    damage_party: 'Danno con controparte',
+    damage_party_sub: 'Collisione o incidente con un\'altra persona',
+    damage_self: 'Danno senza controparte',
+    damage_self_sub: 'Causato da sé, es. palo o marciapiede',
+    submit: 'Invia segnalazione danno',
+    send: 'Invia il modulo',
+  }
+};
+
+let lang = 'nl';
+
+async function zoekGarages() {
+  const pc = document.getElementById('garage-postcode').value.trim().toUpperCase().replace(/\s/g,'');
+  if (pc.length < 4) { toast('⚠️ Voer een geldige postcode in'); return; }
+  const results = document.getElementById('garage-results');
+  results.innerHTML = '<div style="font-size:13px;color:#64748b;padding:8px 0;">Zoeken...</div>';
+
+  if (!garages || garages.length === 0) {
+    results.innerHTML = '<div style="font-size:12px;color:#64748b;padding:8px 0;">Nog geen garages beschikbaar. Neem contact op via onderhoud@selectcarlease.nl</div>';
+    return;
+  }
+
+  const nearby = await getGaragesNearPostcode(pc);
+  if (!nearby || nearby.length === 0) {
+    results.innerHTML = '<div style="font-size:12px;color:#64748b;padding:8px 0;">Geen garages gevonden. Neem contact op via onderhoud@selectcarlease.nl</div>';
+    return;
+  }
+
+  results.innerHTML = nearby.map(function(g) {
+    var html = '<div style="background:#f8fafc;border:0.5px solid #e2e8f0;border-radius:10px;padding:12px;margin-bottom:7px;">';
+    html += '<div style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:2px;">' + g.naam + '</div>';
+    html += '<div style="font-size:12px;color:#64748b;">' + g.straat + ', ' + g.postcode + ' ' + g.stad + '</div>';
+    if (g.merk) html += '<div style="font-size:11px;color:#64748b;margin-top:1px;">' + g.merk + '</div>';
+    html += '<div style="display:flex;gap:6px;margin-top:8px;">';
+    html += '<span style="font-size:11px;font-weight:600;padding:3px 8px;background:#e8f0f9;color:#0d1f4e;border-radius:20px;">📍 ' + g.dist + ' km</span>';
+    if (g.tel) {
+      html += '<button onclick="window.location.href=\'tel:' + g.tel.replace(/[^0-9]/g,'') + '\'" style="font-size:11px;padding:3px 8px;background:#0d1f4e;color:white;border:none;border-radius:20px;cursor:pointer;font-family:Outfit,sans-serif;">📞 Bel</button>';
+    }
+    html += '</div></div>';
+    return html;
+  }).join('');
+}
+
+function toggleLang() {
+  if (lang === 'nl') setLang('en');
+  else if (lang === 'en') setLang('it');
+  else setLang('nl');
+}
+
+function setLang(l) {
+  lang = l;
+  sessionStorage.setItem('scl_lang', l);
+  applyTranslations();
+  checkURLParam();
+}
+
+function t(key) {
+  return (T[lang] && T[lang][key]) || T.nl[key] || key;
+}
+
+function applyTranslations() {
+  const els = {
+    'a-welcome-lbl': t('welcome'),
+    'lbl-documents': t('documents'),
+    'lbl-greencard': t('greencard'),
+    'lbl-regcard': t('regcard'),
+    'lbl-rdw': t('rdw'),
+    'lbl-actions': t('actions'),
+    'lbl-damage': t('damage'),
+    'lbl-damagesub': t('damagesub'),
+    'lbl-maintenance': t('maintenance'),
+    'lbl-maintsub': t('maintsub'),
+    'lbl-breakdown': t('breakdown'),
+    'lbl-breakdownsub': t('breakdownsub'),
+    'lbl-lease': t('lease'),
+    'lbl-leasesub': t('leasesub'),
+    'lbl-carinfo': t('carinfo'),
+    'lbl-plate': t('plate'),
+    'lbl-model-lbl': t('model'),
+    'lbl-year': t('year'),
+    'lbl-fuel': t('fuel'),
+    'lbl-color': t('color'),
+    'lbl-contract-lbl': t('contract'),
+  };
+  Object.entries(els).forEach(([id, txt]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = txt;
+  });
+  // Language toggle button
+  // lang toggle shows all flags always
+}
+
+// RDW KENTEKEN LOOKUP
+async function rdwLookup() {
+  const plate = document.getElementById('e-plate').value.replace(/-/g,'').toUpperCase();
+  if (!plate || plate.length < 5) { toast('⚠️ Voer eerst een kenteken in'); return; }
+
+  const btn = document.getElementById('rdw-btn');
+  const status = document.getElementById('rdw-status');
+  btn.textContent = '⏳';
+  btn.disabled = true;
+  status.style.display = 'block';
+  status.style.color = '#64748b';
+  status.textContent = 'Gegevens ophalen bij RDW...';
+
+  try {
+    const res = await fetch('https://opendata.rdw.nl/resource/m9d7-ebf2.json?kenteken=' + plate);
+    const data = await res.json();
+
+    if (!data || data.length === 0) {
+      status.style.color = '#dc2626';
+      status.textContent = '❌ Kenteken niet gevonden in RDW';
+      btn.textContent = '🔍 RDW';
+      btn.disabled = false;
+      return;
+    }
+
+    const v = data[0];
+
+    // Merk + handelsbenaming
+    const merk = v.merk ? v.merk.charAt(0) + v.merk.slice(1).toLowerCase() : '';
+    const model = v.handelsbenaming ? v.handelsbenaming.charAt(0) + v.handelsbenaming.slice(1).toLowerCase() : '';
+    document.getElementById('e-model').value = (merk + ' ' + model).trim();
+
+    // Bouwjaar from datum_eerste_toelating (YYYYMMDD)
+    if (v.datum_eerste_toelating && v.datum_eerste_toelating.length >= 4) {
+      document.getElementById('e-year').value = v.datum_eerste_toelating.substring(0,4);
+    }
+
+    // Kleur
+    if (v.eerste_kleur) {
+      const kleurMap = {
+        'WIT': 'Wit', 'ZWART': 'Zwart', 'GRIJS': 'Grijs', 'ZILVER': 'Zilver',
+        'BLAUW': 'Blauw', 'ROOD': 'Rood', 'GROEN': 'Groen', 'GEEL': 'Geel',
+        'ORANJE': 'Oranje', 'BRUIN': 'Bruin', 'BEIGE': 'Beige', 'PAARS': 'Paars'
+      };
+      document.getElementById('e-color').value = kleurMap[v.eerste_kleur.toUpperCase()] || v.eerste_kleur;
+    }
+
+    // Brandstof - fetch from fuel endpoint
+    try {
+      const fuelRes = await fetch('https://opendata.rdw.nl/resource/8ys7-d773.json?kenteken=' + plate);
+      const fuelData = await fuelRes.json();
+      if (fuelData && fuelData.length > 0 && fuelData[0].brandstof_omschrijving) {
+        const fuelMap = {
+          'Benzine': 'Benzine', 'Diesel': 'Diesel',
+          'Elektriciteit': 'Elektrisch', 'LPG': 'LPG',
+          'Benzine/Elektrisch': 'Hybride', 'Diesel/Elektrisch': 'Hybride'
+        };
+        const fuelRaw = fuelData[0].brandstof_omschrijving;
+        const fuelEl = document.getElementById('e-fuel');
+        const mapped = fuelMap[fuelRaw] || fuelRaw;
+        for (let opt of fuelEl.options) {
+          if (opt.value === mapped) { fuelEl.value = mapped; break; }
+        }
+      }
+    } catch(e) {}
+
+    // APK datum
+    if (v.vervaldatum_apk && v.vervaldatum_apk.length === 8) {
+      const apkStr = v.vervaldatum_apk.substring(0,4) + '-' + v.vervaldatum_apk.substring(4,6) + '-' + v.vervaldatum_apk.substring(6,8);
+      document.getElementById('e-apk').value = apkStr;
+    }
+
+    status.style.color = '#15803d';
+    status.textContent = '✅ Gegevens automatisch ingevuld vanuit RDW';
+    btn.textContent = '✅';
+    setTimeout(() => { btn.textContent = '🔍 RDW'; btn.disabled = false; }, 2000);
+
+  } catch(e) {
+    status.style.color = '#dc2626';
+    status.textContent = '❌ Fout bij ophalen RDW gegevens';
+    btn.textContent = '🔍 RDW';
+    btn.disabled = false;
+  }
+}
+
+// LOGIN
+const USERS = {'Denny':'Admin3446','Mandy':'Select2026','Mohamed':'Select2026','Giel':'Select2026','uitgifte':'Select2026'};
 
 function doLogin() {
   var user = document.getElementById('login-user').value.trim();
@@ -2384,6 +3256,127 @@ setTimeout(() => {
     if (banner) banner.style.display = 'flex';
   }
 }, 3000);
+
+// ===== OVERRIDES - GECOMBINEERD LOGIN + PERSISTENTE SESSIES =====
+
+var ADMIN_USERS = {'Denny':{pw:'Admin3446',role:'super'},'Mandy':{pw:'Select2026',role:'aanmaak'},'Mohamed':{pw:'Select2026',role:'aanmaak'},'Giel':{pw:'Select2026',role:'aanmaak'},'uitgifte':{pw:'Select2026',role:'uitgifte'}};
+
+// Override klantEmail normalisatie in loadCarsFromDB via monkey-patch op sbFetch resultaat
+var _origLoadCars = loadCarsFromDB;
+
+async function doSlimLogin() {
+  var inp = document.getElementById('login-input');
+  var pwe = document.getElementById('login-pw');
+  var err = document.getElementById('login-error');
+  var btn = document.getElementById('login-btn');
+  if (!inp||!pwe||!btn) { alert('Herlaad de pagina'); return; }
+  var v = inp.value.trim(), pw = pwe.value;
+  err.style.display = 'none';
+  if (!v||!pw) { err.textContent='Vul uw gegevens in.'; err.style.display='block'; return; }
+  btn.textContent='Bezig...'; btn.disabled=true;
+  try {
+    // Admin check
+    if (ADMIN_USERS[v] && ADMIN_USERS[v].pw===pw) {
+      localStorage.setItem('scl_admin','1'); localStorage.setItem('scl_user',v); localStorage.setItem('scl_role',ADMIN_USERS[v].role);
+      sessionStorage.setItem('scl_admin','1'); sessionStorage.setItem('scl_user',v); sessionStorage.setItem('scl_role',ADMIN_USERS[v].role);
+      try { await loadCarsFromDB(); } catch(e) { if(!window.cars) window.cars=[]; }
+      var role = ADMIN_USERS[v].role;
+      if (role==='uitgifte') { renderUitgiftePortal(); showScreen('screen-uitgifte-portal'); }
+      else { renderCarList(); showScreen('screen-admin'); var el=document.getElementById('admin-username'); if(el) el.textContent=v; }
+      btn.textContent='Inloggen'; btn.disabled=false; return;
+    }
+    // Klant login via Supabase
+    var em = v.toLowerCase().trim();
+    var res = await fetch(SUPA_URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPA_KEY},body:JSON.stringify({email:em,password:pw})});
+    var data = await res.json();
+    if (data.access_token) {
+      localStorage.setItem('klant_token',data.access_token); localStorage.setItem('klant_email',em);
+      sessionStorage.setItem('klant_token',data.access_token); sessionStorage.setItem('klant_email',em);
+      try { await loadCarsFromDB(); } catch(e) { if(!window.cars) window.cars=[]; }
+      var car = cars.find(function(c){ return c.klantEmail && c.klantEmail.toLowerCase()===em; });
+      if (car) { loadCarApp(car); showScreen('screen-app'); }
+      else { err.textContent='Geen leaseauto gevonden. Bel 0348-467657'; err.style.display='block'; }
+    } else {
+      err.textContent = data.error_description || data.msg || 'Onjuiste inloggegevens.';
+      err.style.display = 'block';
+    }
+  } catch(e) { err.textContent='Fout: '+(e.message||'onbekend'); err.style.display='block'; }
+  btn.textContent='Inloggen'; btn.disabled=false;
+}
+
+// Override load() voor persistente sessies
+async function load() {
+  var sAdmin = localStorage.getItem('scl_admin');
+  var sUser = localStorage.getItem('scl_user');
+  var sRole = localStorage.getItem('scl_role');
+  if (sAdmin==='1' && sUser) {
+    sessionStorage.setItem('scl_admin','1');
+    sessionStorage.setItem('scl_user',sUser);
+    sessionStorage.setItem('scl_role',sRole||'super');
+  }
+  var kToken = localStorage.getItem('klant_token');
+  var kEmail = localStorage.getItem('klant_email');
+  if (kToken && kEmail) {
+    try {
+      await loadCarsFromDB();
+      var car = cars.find(function(c){ return c.klantEmail && c.klantEmail.toLowerCase()===kEmail.toLowerCase(); });
+      if (car) { loadCarApp(car); showScreen('screen-app'); return; }
+    } catch(e) {}
+    localStorage.removeItem('klant_token'); localStorage.removeItem('klant_email');
+  }
+  var loggedIn = sessionStorage.getItem('scl_admin');
+  var loggedUser = sessionStorage.getItem('scl_user');
+  var loggedRole = sessionStorage.getItem('scl_role') || 'super';
+  if (loggedIn==='1' && loggedUser) {
+    try { await loadCarsFromDB(); } catch(e) { if(!window.cars) window.cars=[]; }
+    if (loggedRole==='uitgifte') { renderUitgiftePortal(); showScreen('screen-uitgifte-portal'); }
+    else { renderCarList(); showScreen('screen-admin'); var el=document.getElementById('admin-username'); if(el) el.textContent=loggedUser; }
+    return;
+  }
+  var savedLang = localStorage.getItem('scl_lang') || sessionStorage.getItem('scl_lang');
+  if (savedLang) lang = savedLang;
+  showScreen('screen-klant-login');
+}
+
+// Override adminLogout
+function adminLogout() {
+  localStorage.clear(); sessionStorage.clear();
+  showScreen('screen-klant-login');
+}
+
+// Override klantLogout
+function klantLogout() {
+  localStorage.removeItem('klant_token'); localStorage.removeItem('klant_email');
+  sessionStorage.removeItem('klant_token'); sessionStorage.removeItem('klant_email');
+  showScreen('screen-klant-login');
+}
+
+// Override uitnodigingSturen - altijd met wachtwoord
+async function uitnodigingSturen(carId) {
+  var car = cars.find(function(c){return c.id===carId;});
+  if (!car||!car.klantEmail) { toast('Geen e-mailadres bekend'); return; }
+  var tempPw = Math.random().toString(36).slice(2,6).toUpperCase()+Math.random().toString(36).slice(2,5)+'1!';
+  var email = car.klantEmail.toLowerCase().trim();
+  try { await fetch(SUPA_URL+'/auth/v1/signup',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPA_KEY},body:JSON.stringify({email:email,password:tempPw})}); } catch(e) {}
+  var subj = encodeURIComponent('Uw toegang tot Mijn Select Car Lease');
+  var body = encodeURIComponent('Beste '+(car.klant||'klant')+', uw leaseportaal: '+window.location.origin+'. E-mail: '+email+'. Wachtwoord: '+tempPw+'. Met vr. groet, Select Car Lease 0348-467657');
+  window.location.href = 'mailto:'+email+'?subject='+subj+'&body='+body;
+  toast('Uitnodiging verstuurd!');
+}
+
+// Override resetKlantWachtwoord
+async function resetKlantWachtwoord(carId) {
+  var car = cars.find(function(c){return c.id===carId;});
+  if (!car||!car.klantEmail) { toast('Geen e-mailadres bekend'); return; }
+  var tempPw = Math.random().toString(36).slice(2,6).toUpperCase()+Math.random().toString(36).slice(2,5)+'1!';
+  var email = car.klantEmail.toLowerCase().trim();
+  try { await fetch(SUPA_URL+'/auth/v1/signup',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPA_KEY},body:JSON.stringify({email:email,password:tempPw})}); } catch(e) {}
+  var subj = encodeURIComponent('Nieuw wachtwoord Mijn Select Car Lease');
+  var body = encodeURIComponent('Beste '+(car.klant||'klant')+', nieuw wachtwoord: '+tempPw+'. Inloggen: '+window.location.origin+'. E-mail: '+email);
+  window.location.href = 'mailto:'+email+'?subject='+subj+'&body='+body;
+  toast('Nieuw wachtwoord verstuurd!');
+}
+
 </script>
 </body>
 </html>
