@@ -3407,18 +3407,18 @@ async function uitnodigingSturen(carId){
   var email=car.klantEmail.toLowerCase().trim();
   try{await fetch(SUPA_URL+'/auth/v1/signup',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPA_KEY},body:JSON.stringify({email:email,password:tempPw})});}catch(e){}
   var subj=encodeURIComponent('Uw toegang tot Mijn Select Car Lease');
-  var body=encodeURIComponent('Beste '+(car.klant||'klant')+',
+  var body=encodeURIComponent('Beste '+(car.klant||'klant')+', uw leaseportaal: '+window.location.origin+'. E-mail: '+email+'. Wachtwoord: '+tempPw+'. Met vr. groet, Select Car Lease 0348-467657');
 
-Uw leaseportaal staat klaar op:
-'+window.location.origin+'
 
-Inloggegevens:
-E-mail: '+email+'
-Wachtwoord: '+tempPw+'
 
-Met vriendelijke groet,
-Select Car Lease
-0348-467657');
+
+
+
+
+
+
+
+
   window.location.href='mailto:'+email+'?subject='+subj+'&body='+body;
   toast('Uitnodiging verstuurd naar '+email+'!');
 }
@@ -3431,16 +3431,16 @@ async function resetKlantWachtwoord(carId){
   var email=car.klantEmail.toLowerCase().trim();
   try{await fetch(SUPA_URL+'/auth/v1/signup',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPA_KEY},body:JSON.stringify({email:email,password:tempPw})});}catch(e){}
   var subj=encodeURIComponent('Nieuw wachtwoord Mijn Select Car Lease');
-  var body=encodeURIComponent('Beste '+(car.klant||'klant')+',
+  var body=encodeURIComponent('Beste '+(car.klant||'klant')+', nieuw wachtwoord: '+tempPw+'. Inloggen: '+window.location.origin+'. E-mail: '+email+'. Met vr. groet, Select Car Lease');
 
-Uw nieuwe wachtwoord:
-'+tempPw+'
 
-Inloggen via:
-'+window.location.origin+'
-E-mail: '+email+'
 
-Met vriendelijke groet, Select Car Lease');
+
+
+
+
+
+
   window.location.href='mailto:'+email+'?subject='+subj+'&body='+body;
   toast('Nieuw wachtwoord verstuurd!');
 }
