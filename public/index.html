@@ -1558,6 +1558,14 @@ async function loadCarsFromDB() {
     if (Array.isArray(data)) {
       cars = data.map(r => ({
         id: r.id, plate: r.plate, model: r.model, klant: r.klant,
+        klantEmail: (r.klant_email || '').toLowerCase().trim(),
+        klantTel: r.klant_tel || '',
+        manager: r.manager || '',
+        uitgifteDatum: r.uitgifte_datum || null,
+        uitgifteKm: r.uitgifte_km || null,
+        uitgifteBrandstof: r.uitgifte_brandstof || null,
+        uitgifte: r.uitgifte ? (typeof r.uitgifte === 'string' ? JSON.parse(r.uitgifte) : r.uitgifte) : null,
+        inname: r.inname ? (typeof r.inname === 'string' ? JSON.parse(r.inname) : r.inname) : null,
         active: r.active, year: r.year, color: r.color, fuel: r.fuel,
         contract: r.contract, apk: r.apk, insurer: r.insurer,
         policy: r.policy, cover: r.cover, insFrom: r.ins_from,
@@ -1602,6 +1610,14 @@ async function loadCarByID(id) {
       const r = data[0];
       return {
         id: r.id, plate: r.plate, model: r.model, klant: r.klant,
+        klantEmail: (r.klant_email || '').toLowerCase().trim(),
+        klantTel: r.klant_tel || '',
+        manager: r.manager || '',
+        uitgifteDatum: r.uitgifte_datum || null,
+        uitgifteKm: r.uitgifte_km || null,
+        uitgifteBrandstof: r.uitgifte_brandstof || null,
+        uitgifte: r.uitgifte ? (typeof r.uitgifte === 'string' ? JSON.parse(r.uitgifte) : r.uitgifte) : null,
+        inname: r.inname ? (typeof r.inname === 'string' ? JSON.parse(r.inname) : r.inname) : null,
         active: r.active, year: r.year, color: r.color, fuel: r.fuel,
         contract: r.contract, apk: r.apk, insurer: r.insurer,
         policy: r.policy, cover: r.cover, insFrom: r.ins_from,
@@ -3259,9 +3275,51 @@ setTimeout(() => {
 
 // ===== OVERRIDES - GECOMBINEERD LOGIN + PERSISTENTE SESSIES =====
 
-var ADMIN_USERS = {'Denny':{pw:'Admin3446',role:'super'},'Mandy':{pw:'Select2026',role:'aanmaak'},'Mohamed':{pw:'Select2026',role:'aanmaak'},'Giel':{pw:'Select2026',role:'aanmaak'},'uitgifte':{pw:'Select2026',role:'uitgifte'}};
+// Override renderCarList - met alle knoppen inclusief email beheer
+function renderCarList() {
+  var list = document.getElementById('car-list');
+  var noEl = document.getElementById('no-cars');
+  var countEl = document.getElementById('car-count');
+  if (!list) return;
+  var active = cars.filter(function(c){ return c.active !== '0' && c.active !== 0; });
+  if (countEl) countEl.textContent = active.length;
+  if (active.length === 0) { list.innerHTML = ''; if (noEl) noEl.style.display = 'block'; return; }
+  if (noEl) noEl.style.display = 'none';
+  var html = '';
+  active.forEach(function(car) {
+    var sc = car.active === 'uitgifte' ? '#f59e0b' : car.active === 'inname' ? '#dc2626' : '#15803d';
+    var sl = car.active === 'uitgifte' ? 'Klaar voor uitgifte' : car.active === 'inname' ? 'Klaar voor inname' : 'Actief';
+    var id = car.id;
+    var today = new Date();
+    var apkWarn = car.apk && (new Date(car.apk) - today) < 30*24*60*60*1000;
+    var conWarn = car.contract && (new Date(car.contract) - today) < 30*24*60*60*1000;
+    html += '<div style="background:#fff;border:0.5px solid #e2e8f0;border-radius:14px;padding:14px 16px;margin-bottom:8px;">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">';
+    html += '<div>';
+    html += '<div style="font-size:16px;font-weight:700;color:#0f172a;">' + car.plate + '</div>';
+    html += '<div style="font-size:13px;color:#64748b;">' + (car.model||'') + (car.year ? ' &middot; ' + car.year : '') + '</div>';
+    if (car.klant) html += '<div style="font-size:13px;color:#0f172a;">' + car.klant + '</div>';
+    if (car.klantEmail) html += '<div style="font-size:11px;color:#94a3b8;">' + car.klantEmail + '</div>';
+    html += '</div>';
+    html += '<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:' + sc + '20;color:' + sc + ';font-weight:500;">' + sl + '</span>';
+    html += '</div>';
+    if (apkWarn) html += '<div style="font-size:11px;color:#dc2626;margin-bottom:4px;">APK verloopt: ' + fmtDate(car.apk) + '</div>';
+    if (conWarn) html += '<div style="font-size:11px;color:#f59e0b;margin-bottom:4px;">Contract verloopt: ' + fmtDate(car.contract) + '</div>';
+    html += '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px;">';
+    html += '<button data-id="' + id + '" onclick="editCar(this.dataset.id)" style="padding:5px 10px;background:#f1f5f9;color:#0f172a;border:0.5px solid #e2e8f0;border-radius:8px;font-size:12px;cursor:pointer;font-family:Outfit,sans-serif;">✏️ Bewerken</button>';
+    html += '<button data-id="' + id + '" onclick="previewCarById(this.dataset.id)" style="padding:5px 10px;background:#eff6ff;color:#1d4ed8;border:0.5px solid #bfdbfe;border-radius:8px;font-size:12px;cursor:pointer;font-family:Outfit,sans-serif;">📱 Preview</button>';
+    html += '<button data-id="' + id + '" onclick="openUitgifte(this.dataset.id)" style="padding:5px 10px;background:#f0fdf4;color:#15803d;border:0.5px solid #bbf7d0;border-radius:8px;font-size:12px;cursor:pointer;font-family:Outfit,sans-serif;">📋 Uitgifte</button>';
+    html += '<button data-id="' + id + '" onclick="openInname(this.dataset.id)" style="padding:5px 10px;background:#fef2f2;color:#dc2626;border:0.5px solid #fecaca;border-radius:8px;font-size:12px;cursor:pointer;font-family:Outfit,sans-serif;">📋 Inname</button>';
+    if (car.klantEmail) {
+      html += '<button data-id="' + id + '" onclick="uitnodigingSturen(this.dataset.id)" style="padding:5px 10px;background:#fefce8;color:#854d0e;border:0.5px solid #fde68a;border-radius:8px;font-size:12px;cursor:pointer;font-family:Outfit,sans-serif;">📧 Uitnodiging</button>';
+      html += '<button data-id="' + id + '" onclick="resetKlantWachtwoord(this.dataset.id)" style="padding:5px 10px;background:#fff7ed;color:#c2410c;border:0.5px solid #fed7aa;border-radius:8px;font-size:12px;cursor:pointer;font-family:Outfit,sans-serif;">🔑 Reset ww</button>';
+    }
+    html += '</div></div>';
+  });
+  list.innerHTML = html;
+}
 
-// Override klantEmail normalisatie in loadCarsFromDB via monkey-patch op sbFetch resultaat
+// Override klantEmail normalisatie// Override klantEmail normalisatie in loadCarsFromDB via monkey-patch op sbFetch resultaat
 var _origLoadCars = loadCarsFromDB;
 
 async function doSlimLogin() {
