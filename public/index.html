@@ -1679,6 +1679,48 @@ async function doSlimLogin(){
   btn.textContent = 'Inloggen'; btn.disabled = false;
 }
 
+function renderCarList() {
+  var list = document.getElementById('car-list');
+  var noEl = document.getElementById('no-cars');
+  var countEl = document.getElementById('car-count');
+  if (!list) return;
+  var activeCars = cars.filter(function(c) { return c.active !== '0' && c.active !== 0; });
+  if (countEl) countEl.textContent = activeCars.length;
+  if (activeCars.length === 0) {
+    list.innerHTML = '';
+    if (noEl) noEl.style.display = 'block';
+    return;
+  }
+  if (noEl) noEl.style.display = 'none';
+  list.innerHTML = activeCars.map(function(car) {
+    var statusColor = car.active === 'uitgifte' ? '#f59e0b' : car.active === 'inname' ? '#dc2626' : '#15803d';
+    var statusLabel = car.active === 'uitgifte' ? 'Klaar voor uitgifte' : car.active === 'inname' ? 'Klaar voor inname' : 'Actief';
+    var today = new Date(); var apkDate = car.apk ? new Date(car.apk) : null;
+    var apkWarn = apkDate && (apkDate - today) < 30*24*60*60*1000;
+    var contractDate = car.contract ? new Date(car.contract) : null;
+    var contractWarn = contractDate && (contractDate - today) < 30*24*60*60*1000;
+    return '<div class="car-card" style="background:#fff;border:0.5px solid #e2e8f0;border-radius:14px;padding:14px 16px;margin-bottom:8px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">' +
+        '<div><div style="font-size:16px;font-weight:700;color:#0f172a;letter-spacing:0.5px;">' + car.plate + '</div>' +
+        '<div style="font-size:13px;color:#64748b;">' + (car.model||'') + (car.year ? ' · ' + car.year : '') + '</div>' +
+        (car.klant ? '<div style="font-size:13px;color:#0f172a;margin-top:2px;">👤 ' + car.klant + '</div>' : '') +
+        '</div>' +
+        '<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:' + statusColor + '20;color:' + statusColor + ';font-weight:500;">' + statusLabel + '</span>' +
+      '</div>' +
+      (apkWarn ? '<div style="font-size:11px;color:#dc2626;margin-bottom:4px;">⚠️ APK verloopt ' + fmtDate(car.apk) + '</div>' : '') +
+      (contractWarn ? '<div style="font-size:11px;color:#f59e0b;margin-bottom:4px;">⚠️ Contract verloopt ' + fmtDate(car.contract) + '</div>' : '') +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">' +
+        '<button onclick="editCar('' + car.id + '')" style="padding:6px 12px;background:#f1f5f9;color:#0f172a;border:0.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;">✏️ Bewerken</button>' +
+        '<button onclick="previewCarById('' + car.id + '')" style="padding:6px 12px;background:#eff6ff;color:#1d4ed8;border:0.5px solid #bfdbfe;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;">📱 Preview</button>' +
+        '<button onclick="openUitgifte('' + car.id + '')" style="padding:6px 12px;background:#f0fdf4;color:#15803d;border:0.5px solid #bbf7d0;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;">📋 Uitgifte</button>' +
+        '<button onclick="openInname('' + car.id + '')" style="padding:6px 12px;background:#fef2f2;color:#dc2626;border:0.5px solid #fecaca;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;">📋 Inname</button>' +
+        (car.klantEmail ? '<button onclick="uitnodigingSturen('' + car.id + '')" style="padding:6px 12px;background:#fefce8;color:#854d0e;border:0.5px solid #fde68a;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;">📧 Uitnodiging</button>' : '') +
+        (car.klantEmail ? '<button onclick="resetKlantWachtwoord('' + car.id + '')" style="padding:6px 12px;background:#fff7ed;color:#c2410c;border:0.5px solid #fed7aa;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:Outfit,sans-serif;">🔑 Reset ww</button>' : '') +
+      '</div></div>';
+  }).join('');
+}
+
+
 function loginNaarJuistScherm(user,role){
   if(role==='uitgifte'){renderUitgiftePortal();showScreen('screen-uitgifte-portal');}
   else if(role==='aanmaak'){laadAanmaakScherm(user);showScreen('screen-aanmaak');}
