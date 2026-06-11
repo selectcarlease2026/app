@@ -223,9 +223,8 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 <div id="screen-klant-login" class="screen active" style="display:flex;background:#f1f5f9;justify-content:center;align-items:center;min-height:100vh;">
   <div style="width:100%;max-width:340px;padding:24px;">
     <div style="text-align:center;margin-bottom:28px;">
-      <img src="/images/logo.png" alt="Select Car Lease" style="height:40px;width:auto;margin-bottom:16px;" onerror="this.outerHTML='<div style=\"font-size:22px;font-weight:800;color:#0d1f4e;letter-spacing:-0.5px;margin-bottom:16px;\">SEL<span style=\"color:#f5a623;\">E</span>CT</div>'"><br>
-      <strong style="font-size:18px;color:#0f172a;">Select Car Lease</strong><br>
-      <span style="font-size:13px;color:#64748b;">Log in om verder te gaan</span>
+      <img src="/images/logo.png" alt="Select Car Lease" style="height:44px;width:auto;margin-bottom:16px;mix-blend-mode:multiply;">
+      <div style="font-size:13px;color:#64748b;">Log in om verder te gaan</div>
     </div>
     <div style="background:white;border:0.5px solid #e2e8f0;border-radius:16px;padding:24px;">
       <div style="margin-bottom:12px;">
@@ -235,8 +234,8 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
       <div style="margin-bottom:16px;">
         <label style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:6px;">Wachtwoord</label>
         <div style="position:relative;">
-          <input type="password" id="login-pw" autocomplete="current-password" onkeydown="if(event.key==='Enter')doSlimLogin()" style="width:100%;padding:11px 44px 11px 13px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:Outfit,sans-serif;outline:none;box-sizing:border-box;" placeholder="Wachtwoord">
-          <button type="button" onclick="var i=document.getElementById('login-pw');if(i.type==='password'){i.type='text';this.textContent='verberg';}else{i.type='password';this.textContent='toon';}" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:11px;color:#64748b;padding:4px;">toon</button>
+          <input type="password" id="login-pw" autocomplete="current-password" onkeydown="if(event.key==='Enter')doSlimLogin()" style="width:100%;padding:11px 40px 11px 13px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:Outfit,sans-serif;outline:none;box-sizing:border-box;" placeholder="Wachtwoord">
+          <button type="button" onclick="var i=document.getElementById('login-pw');i.type=i.type==='password'?'text':'password';" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#64748b;font-size:18px;padding:0;line-height:1;">👁</button>
         </div>
       </div>
       <div id="login-error" style="display:none;background:#fef2f2;color:#dc2626;font-size:12px;padding:10px;border-radius:8px;margin-bottom:12px;"></div>
@@ -246,9 +245,9 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
     <div style="margin-top:14px;background:white;border:0.5px solid #e2e8f0;border-radius:12px;padding:12px;text-align:center;">
       <p style="font-size:12px;color:#64748b;margin-bottom:8px;">Kies uw taal / Choose language</p>
       <div style="display:flex;gap:8px;justify-content:center;">
-        <button onclick="setLang('nl')" style="padding:6px 16px;background:#0d1f4e;color:white;border:none;border-radius:8px;font-size:18px;cursor:pointer;">🇳🇱</button>
-        <button onclick="setLang('en')" style="padding:6px 16px;background:white;color:#0d1f4e;border:1px solid #e2e8f0;border-radius:8px;font-size:18px;cursor:pointer;">🇬🇧</button>
-        <button onclick="setLang('it')" style="padding:6px 16px;background:white;color:#0d1f4e;border:1px solid #e2e8f0;border-radius:8px;font-size:18px;cursor:pointer;">🇮🇹</button>
+        <button onclick="setLang('nl')" style="padding:6px 16px;background:#0d1f4e;color:white;border:none;border-radius:8px;font-size:20px;cursor:pointer;line-height:1;">🇳🇱</button>
+        <button onclick="setLang('en')" style="padding:6px 16px;background:white;color:#0d1f4e;border:1px solid #e2e8f0;border-radius:8px;font-size:20px;cursor:pointer;line-height:1;">🇬🇧</button>
+        <button onclick="setLang('it')" style="padding:6px 16px;background:white;color:#0d1f4e;border:1px solid #e2e8f0;border-radius:8px;font-size:20px;cursor:pointer;line-height:1;">🇮🇹</button>
       </div>
     </div>
     <p style="text-align:center;font-size:11px;color:#94a3b8;margin-top:14px;">Select Car Lease &middot; Woerden</p>
@@ -1558,14 +1557,13 @@ async function loadCarsFromDB() {
     if (Array.isArray(data)) {
       cars = data.map(r => ({
         id: r.id, plate: r.plate, model: r.model, klant: r.klant,
-        klantEmail: (r.klant_email || '').toLowerCase().trim(),
-        klantTel: r.klant_tel || '',
-        manager: r.manager || '',
-        uitgifteDatum: r.uitgifte_datum || null,
-        uitgifteKm: r.uitgifte_km || null,
-        uitgifteBrandstof: r.uitgifte_brandstof || null,
-        uitgifte: r.uitgifte ? (typeof r.uitgifte === 'string' ? JSON.parse(r.uitgifte) : r.uitgifte) : null,
-        inname: r.inname ? (typeof r.inname === 'string' ? JSON.parse(r.inname) : r.inname) : null,
+        klantEmail: (r.klant_email||'').toLowerCase().trim(),
+        klantTel: r.klant_tel||'',
+        manager: r.manager||'',
+        uitgifteDatum: r.uitgifte_datum||null, uitgifteKm: r.uitgifte_km||null,
+        uitgifteBrandstof: r.uitgifte_brandstof||null,
+        uitgifte: r.uitgifte?(typeof r.uitgifte==='string'?JSON.parse(r.uitgifte):r.uitgifte):null,
+        inname: r.inname?(typeof r.inname==='string'?JSON.parse(r.inname):r.inname):null,
         active: r.active, year: r.year, color: r.color, fuel: r.fuel,
         contract: r.contract, apk: r.apk, insurer: r.insurer,
         policy: r.policy, cover: r.cover, insFrom: r.ins_from,
@@ -1610,14 +1608,13 @@ async function loadCarByID(id) {
       const r = data[0];
       return {
         id: r.id, plate: r.plate, model: r.model, klant: r.klant,
-        klantEmail: (r.klant_email || '').toLowerCase().trim(),
-        klantTel: r.klant_tel || '',
-        manager: r.manager || '',
-        uitgifteDatum: r.uitgifte_datum || null,
-        uitgifteKm: r.uitgifte_km || null,
-        uitgifteBrandstof: r.uitgifte_brandstof || null,
-        uitgifte: r.uitgifte ? (typeof r.uitgifte === 'string' ? JSON.parse(r.uitgifte) : r.uitgifte) : null,
-        inname: r.inname ? (typeof r.inname === 'string' ? JSON.parse(r.inname) : r.inname) : null,
+        klantEmail: (r.klant_email||'').toLowerCase().trim(),
+        klantTel: r.klant_tel||'',
+        manager: r.manager||'',
+        uitgifteDatum: r.uitgifte_datum||null, uitgifteKm: r.uitgifte_km||null,
+        uitgifteBrandstof: r.uitgifte_brandstof||null,
+        uitgifte: r.uitgifte?(typeof r.uitgifte==='string'?JSON.parse(r.uitgifte):r.uitgifte):null,
+        inname: r.inname?(typeof r.inname==='string'?JSON.parse(r.inname):r.inname):null,
         active: r.active, year: r.year, color: r.color, fuel: r.fuel,
         contract: r.contract, apk: r.apk, insurer: r.insurer,
         policy: r.policy, cover: r.cover, insFrom: r.ins_from,
@@ -3273,165 +3270,178 @@ setTimeout(() => {
   }
 }, 3000);
 
-// ===== OVERRIDES - GECOMBINEERD LOGIN + PERSISTENTE SESSIES =====
+// ============================================================
+// OVERRIDES - ALLES HIER OVERSCHRIJFT DE BOVENSTAANDE CODE
+// ============================================================
 
-// Override renderCarList - met alle knoppen inclusief email beheer
+var ADMIN_USERS = {
+  'Denny':   {pw:'Admin3446',  role:'super'},
+  'Mandy':   {pw:'Select2026', role:'aanmaak'},
+  'Mohamed': {pw:'Select2026', role:'aanmaak'},
+  'Giel':    {pw:'Select2026', role:'aanmaak'},
+  'uitgifte':{pw:'Select2026', role:'uitgifte'}
+};
+
+// renderCarList - volledig opnieuw met alle knoppen
 function renderCarList() {
   var list = document.getElementById('car-list');
   var noEl = document.getElementById('no-cars');
   var countEl = document.getElementById('car-count');
   if (!list) return;
-  var active = cars.filter(function(c){ return c.active !== '0' && c.active !== 0; });
+  var active = cars.filter(function(c){return c.active!=='0'&&c.active!==0;});
   if (countEl) countEl.textContent = active.length;
-  if (active.length === 0) { list.innerHTML = ''; if (noEl) noEl.style.display = 'block'; return; }
-  if (noEl) noEl.style.display = 'none';
-  var html = '';
-  active.forEach(function(car) {
-    var sc = car.active === 'uitgifte' ? '#f59e0b' : car.active === 'inname' ? '#dc2626' : '#15803d';
-    var sl = car.active === 'uitgifte' ? 'Klaar voor uitgifte' : car.active === 'inname' ? 'Klaar voor inname' : 'Actief';
-    var id = car.id;
-    var today = new Date();
-    var apkWarn = car.apk && (new Date(car.apk) - today) < 30*24*60*60*1000;
-    var conWarn = car.contract && (new Date(car.contract) - today) < 30*24*60*60*1000;
-    html += '<div style="background:#fff;border:0.5px solid #e2e8f0;border-radius:14px;padding:14px 16px;margin-bottom:8px;">';
-    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">';
-    html += '<div>';
-    html += '<div style="font-size:16px;font-weight:700;color:#0f172a;">' + car.plate + '</div>';
-    html += '<div style="font-size:13px;color:#64748b;">' + (car.model||'') + (car.year ? ' &middot; ' + car.year : '') + '</div>';
-    if (car.klant) html += '<div style="font-size:13px;color:#0f172a;">' + car.klant + '</div>';
-    if (car.klantEmail) html += '<div style="font-size:11px;color:#94a3b8;">' + car.klantEmail + '</div>';
-    html += '</div>';
-    html += '<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:' + sc + '20;color:' + sc + ';font-weight:500;">' + sl + '</span>';
-    html += '</div>';
-    if (apkWarn) html += '<div style="font-size:11px;color:#dc2626;margin-bottom:4px;">APK verloopt: ' + fmtDate(car.apk) + '</div>';
-    if (conWarn) html += '<div style="font-size:11px;color:#f59e0b;margin-bottom:4px;">Contract verloopt: ' + fmtDate(car.contract) + '</div>';
-    html += '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px;">';
-    html += '<button data-id="' + id + '" onclick="editCar(this.dataset.id)" style="padding:5px 10px;background:#f1f5f9;color:#0f172a;border:0.5px solid #e2e8f0;border-radius:8px;font-size:12px;cursor:pointer;font-family:Outfit,sans-serif;">✏️ Bewerken</button>';
-    html += '<button data-id="' + id + '" onclick="previewCarById(this.dataset.id)" style="padding:5px 10px;background:#eff6ff;color:#1d4ed8;border:0.5px solid #bfdbfe;border-radius:8px;font-size:12px;cursor:pointer;font-family:Outfit,sans-serif;">📱 Preview</button>';
-    html += '<button data-id="' + id + '" onclick="openUitgifte(this.dataset.id)" style="padding:5px 10px;background:#f0fdf4;color:#15803d;border:0.5px solid #bbf7d0;border-radius:8px;font-size:12px;cursor:pointer;font-family:Outfit,sans-serif;">📋 Uitgifte</button>';
-    html += '<button data-id="' + id + '" onclick="openInname(this.dataset.id)" style="padding:5px 10px;background:#fef2f2;color:#dc2626;border:0.5px solid #fecaca;border-radius:8px;font-size:12px;cursor:pointer;font-family:Outfit,sans-serif;">📋 Inname</button>';
-    if (car.klantEmail) {
-      html += '<button data-id="' + id + '" onclick="uitnodigingSturen(this.dataset.id)" style="padding:5px 10px;background:#fefce8;color:#854d0e;border:0.5px solid #fde68a;border-radius:8px;font-size:12px;cursor:pointer;font-family:Outfit,sans-serif;">📧 Uitnodiging</button>';
-      html += '<button data-id="' + id + '" onclick="resetKlantWachtwoord(this.dataset.id)" style="padding:5px 10px;background:#fff7ed;color:#c2410c;border:0.5px solid #fed7aa;border-radius:8px;font-size:12px;cursor:pointer;font-family:Outfit,sans-serif;">🔑 Reset ww</button>';
+  if (!active.length) { list.innerHTML=''; if(noEl)noEl.style.display='block'; return; }
+  if (noEl) noEl.style.display='none';
+  var html='';
+  active.forEach(function(car){
+    var sc=car.active==='uitgifte'?'#f59e0b':car.active==='inname'?'#dc2626':'#15803d';
+    var sl=car.active==='uitgifte'?'Klaar voor uitgifte':car.active==='inname'?'Klaar voor inname':'Actief';
+    var id=car.id;
+    html+='<div style="background:#fff;border:0.5px solid #e2e8f0;border-radius:14px;padding:14px 16px;margin-bottom:8px;">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">';
+    html+='<div><div style="font-size:16px;font-weight:700;color:#0f172a;">'+car.plate+'</div>';
+    html+='<div style="font-size:13px;color:#64748b;">'+(car.model||'')+(car.year?' &middot; '+car.year:'')+'</div>';
+    if(car.klant)html+='<div style="font-size:13px;color:#0f172a;">'+car.klant+'</div>';
+    if(car.klantEmail)html+='<div style="font-size:11px;color:#94a3b8;">'+car.klantEmail+'</div>';
+    html+='</div><span style="font-size:11px;padding:3px 10px;border-radius:20px;background:'+sc+'20;color:'+sc+';font-weight:500;">'+sl+'</span></div>';
+    html+='<div style="display:flex;gap:5px;flex-wrap:wrap;">';
+    html+='<button data-id="'+id+'" onclick="editCar(this.dataset.id)" style="padding:5px 10px;background:#f1f5f9;color:#0f172a;border:0.5px solid #e2e8f0;border-radius:8px;font-size:12px;cursor:pointer;font-family:Outfit,sans-serif;">✏️ Bewerken</button>';
+    html+='<button data-id="'+id+'" onclick="previewCarById(this.dataset.id)" style="padding:5px 10px;background:#eff6ff;color:#1d4ed8;border:0.5px solid #bfdbfe;border-radius:8px;font-size:12px;cursor:pointer;font-family:Outfit,sans-serif;">📱 Preview</button>';
+    html+='<button data-id="'+id+'" onclick="openUitgifte(this.dataset.id)" style="padding:5px 10px;background:#f0fdf4;color:#15803d;border:0.5px solid #bbf7d0;border-radius:8px;font-size:12px;cursor:pointer;font-family:Outfit,sans-serif;">📋 Uitgifte</button>';
+    html+='<button data-id="'+id+'" onclick="openInname(this.dataset.id)" style="padding:5px 10px;background:#fef2f2;color:#dc2626;border:0.5px solid #fecaca;border-radius:8px;font-size:12px;cursor:pointer;font-family:Outfit,sans-serif;">📋 Inname</button>';
+    if(car.klantEmail){
+      html+='<button data-id="'+id+'" onclick="uitnodigingSturen(this.dataset.id)" style="padding:5px 10px;background:#fefce8;color:#854d0e;border:0.5px solid #fde68a;border-radius:8px;font-size:12px;cursor:pointer;font-family:Outfit,sans-serif;">📧 Uitnodiging</button>';
+      html+='<button data-id="'+id+'" onclick="resetKlantWachtwoord(this.dataset.id)" style="padding:5px 10px;background:#fff7ed;color:#c2410c;border:0.5px solid #fed7aa;border-radius:8px;font-size:12px;cursor:pointer;font-family:Outfit,sans-serif;">🔑 Reset ww</button>';
     }
-    html += '</div></div>';
+    html+='</div></div>';
   });
-  list.innerHTML = html;
+  list.innerHTML=html;
 }
 
-// Override klantEmail normalisatie// Override klantEmail normalisatie in loadCarsFromDB via monkey-patch op sbFetch resultaat
-var _origLoadCars = loadCarsFromDB;
-
+// doSlimLogin - gecombineerd admin + klant
 async function doSlimLogin() {
-  var inp = document.getElementById('login-input');
-  var pwe = document.getElementById('login-pw');
-  var err = document.getElementById('login-error');
-  var btn = document.getElementById('login-btn');
-  if (!inp||!pwe||!btn) { alert('Herlaad de pagina'); return; }
-  var v = inp.value.trim(), pw = pwe.value;
-  err.style.display = 'none';
-  if (!v||!pw) { err.textContent='Vul uw gegevens in.'; err.style.display='block'; return; }
-  btn.textContent='Bezig...'; btn.disabled=true;
-  try {
+  var inp=document.getElementById('login-input');
+  var pwe=document.getElementById('login-pw');
+  var err=document.getElementById('login-error');
+  var btn=document.getElementById('login-btn');
+  if(!inp||!pwe||!btn){alert('Herlaad de pagina');return;}
+  var v=inp.value.trim(),pw=pwe.value;
+  err.style.display='none';
+  if(!v||!pw){err.textContent='Vul uw gegevens in.';err.style.display='block';return;}
+  btn.textContent='Bezig...';btn.disabled=true;
+  try{
     // Admin check
-    if (ADMIN_USERS[v] && ADMIN_USERS[v].pw===pw) {
-      localStorage.setItem('scl_admin','1'); localStorage.setItem('scl_user',v); localStorage.setItem('scl_role',ADMIN_USERS[v].role);
-      sessionStorage.setItem('scl_admin','1'); sessionStorage.setItem('scl_user',v); sessionStorage.setItem('scl_role',ADMIN_USERS[v].role);
-      try { await loadCarsFromDB(); } catch(e) { if(!window.cars) window.cars=[]; }
-      var role = ADMIN_USERS[v].role;
-      if (role==='uitgifte') { renderUitgiftePortal(); showScreen('screen-uitgifte-portal'); }
-      else { renderCarList(); showScreen('screen-admin'); var el=document.getElementById('admin-username'); if(el) el.textContent=v; }
-      btn.textContent='Inloggen'; btn.disabled=false; return;
+    if(ADMIN_USERS[v]&&ADMIN_USERS[v].pw===pw){
+      var role=ADMIN_USERS[v].role;
+      localStorage.setItem('scl_admin','1');localStorage.setItem('scl_user',v);localStorage.setItem('scl_role',role);
+      sessionStorage.setItem('scl_admin','1');sessionStorage.setItem('scl_user',v);sessionStorage.setItem('scl_role',role);
+      try{await loadCarsFromDB();}catch(e){if(!window.cars)window.cars=[];}
+      if(role==='uitgifte'){renderUitgiftePortal();showScreen('screen-uitgifte-portal');}
+      else{renderCarList();showScreen('screen-admin');var el=document.getElementById('admin-username');if(el)el.textContent=v;}
+      btn.textContent='Inloggen';btn.disabled=false;return;
     }
-    // Klant login via Supabase
-    var em = v.toLowerCase().trim();
-    var res = await fetch(SUPA_URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPA_KEY},body:JSON.stringify({email:em,password:pw})});
-    var data = await res.json();
-    if (data.access_token) {
-      localStorage.setItem('klant_token',data.access_token); localStorage.setItem('klant_email',em);
-      sessionStorage.setItem('klant_token',data.access_token); sessionStorage.setItem('klant_email',em);
-      try { await loadCarsFromDB(); } catch(e) { if(!window.cars) window.cars=[]; }
-      var car = cars.find(function(c){ return c.klantEmail && c.klantEmail.toLowerCase()===em; });
-      if (car) { loadCarApp(car); showScreen('screen-app'); }
-      else { err.textContent='Geen leaseauto gevonden. Bel 0348-467657'; err.style.display='block'; }
-    } else {
-      var rawErr = data.error_description || data.msg || ''; err.textContent = (rawErr.toLowerCase().includes('invalid') || rawErr.toLowerCase().includes('credentials') || rawErr.toLowerCase().includes('password')) ? 'Onjuist wachtwoord. Gebruik de link die u per e-mail hebt ontvangen.' : rawErr || 'Onjuiste inloggegevens.'; 
-      err.style.display = 'block';
+    // Klant login
+    var em=v.toLowerCase().trim();
+    var res=await fetch(SUPA_URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPA_KEY},body:JSON.stringify({email:em,password:pw})});
+    var data=await res.json();
+    if(data.access_token){
+      localStorage.setItem('klant_token',data.access_token);localStorage.setItem('klant_email',em);
+      sessionStorage.setItem('klant_token',data.access_token);sessionStorage.setItem('klant_email',em);
+      try{await loadCarsFromDB();}catch(e){if(!window.cars)window.cars=[];}
+      var car=cars.find(function(c){return c.klantEmail&&c.klantEmail===em;});
+      if(car){loadCarApp(car);showScreen('screen-app');}
+      else{err.textContent='Geen leaseauto gevonden. Bel 0348-467657';err.style.display='block';}
+    }else{
+      err.textContent='Onjuiste inloggegevens. Gebruik het wachtwoord uit de uitnodigingsmail.';
+      err.style.display='block';
     }
-  } catch(e) { err.textContent='Fout: '+(e.message||'onbekend'); err.style.display='block'; }
-  btn.textContent='Inloggen'; btn.disabled=false;
+  }catch(e){err.textContent='Verbindingsfout. Controleer internet en probeer opnieuw.';err.style.display='block';}
+  btn.textContent='Inloggen';btn.disabled=false;
 }
 
-// Override load() voor persistente sessies
-async function load() {
-  var sAdmin = localStorage.getItem('scl_admin');
-  var sUser = localStorage.getItem('scl_user');
-  var sRole = localStorage.getItem('scl_role');
-  if (sAdmin==='1' && sUser) {
-    sessionStorage.setItem('scl_admin','1');
-    sessionStorage.setItem('scl_user',sUser);
-    sessionStorage.setItem('scl_role',sRole||'super');
-  }
-  var kToken = localStorage.getItem('klant_token');
-  var kEmail = localStorage.getItem('klant_email');
-  if (kToken && kEmail) {
-    try {
+// load() - persistente sessies
+async function load(){
+  var sAdmin=localStorage.getItem('scl_admin');
+  var sUser=localStorage.getItem('scl_user');
+  var sRole=localStorage.getItem('scl_role');
+  if(sAdmin==='1'&&sUser){sessionStorage.setItem('scl_admin','1');sessionStorage.setItem('scl_user',sUser);sessionStorage.setItem('scl_role',sRole||'super');}
+  var kToken=localStorage.getItem('klant_token');
+  var kEmail=localStorage.getItem('klant_email');
+  if(kToken&&kEmail){
+    try{
       await loadCarsFromDB();
-      var car = cars.find(function(c){ return c.klantEmail && c.klantEmail.toLowerCase()===kEmail.toLowerCase(); });
-      if (car) { loadCarApp(car); showScreen('screen-app'); return; }
-    } catch(e) {}
-    localStorage.removeItem('klant_token'); localStorage.removeItem('klant_email');
+      var car=cars.find(function(c){return c.klantEmail&&c.klantEmail===kEmail;});
+      if(car){loadCarApp(car);showScreen('screen-app');return;}
+    }catch(e){}
+    localStorage.removeItem('klant_token');localStorage.removeItem('klant_email');
   }
-  var loggedIn = sessionStorage.getItem('scl_admin');
-  var loggedUser = sessionStorage.getItem('scl_user');
-  var loggedRole = sessionStorage.getItem('scl_role') || 'super';
-  if (loggedIn==='1' && loggedUser) {
-    try { await loadCarsFromDB(); } catch(e) { if(!window.cars) window.cars=[]; }
-    if (loggedRole==='uitgifte') { renderUitgiftePortal(); showScreen('screen-uitgifte-portal'); }
-    else { renderCarList(); showScreen('screen-admin'); var el=document.getElementById('admin-username'); if(el) el.textContent=loggedUser; }
+  var lIn=sessionStorage.getItem('scl_admin');
+  var lUser=sessionStorage.getItem('scl_user');
+  var lRole=sessionStorage.getItem('scl_role')||'super';
+  if(lIn==='1'&&lUser){
+    try{await loadCarsFromDB();}catch(e){if(!window.cars)window.cars=[];}
+    if(lRole==='uitgifte'){renderUitgiftePortal();showScreen('screen-uitgifte-portal');}
+    else{renderCarList();showScreen('screen-admin');var el=document.getElementById('admin-username');if(el)el.textContent=lUser;}
     return;
   }
-  var savedLang = localStorage.getItem('scl_lang') || sessionStorage.getItem('scl_lang');
-  if (savedLang) lang = savedLang;
+  var sLang=localStorage.getItem('scl_lang')||sessionStorage.getItem('scl_lang');
+  if(sLang)lang=sLang;
   showScreen('screen-klant-login');
 }
 
-// Override adminLogout
-function adminLogout() {
-  localStorage.clear(); sessionStorage.clear();
+// adminLogout
+function adminLogout(){localStorage.clear();sessionStorage.clear();showScreen('screen-klant-login');}
+
+// klantLogout
+function klantLogout(){
+  localStorage.removeItem('klant_token');localStorage.removeItem('klant_email');
+  sessionStorage.removeItem('klant_token');sessionStorage.removeItem('klant_email');
   showScreen('screen-klant-login');
 }
 
-// Override klantLogout
-function klantLogout() {
-  localStorage.removeItem('klant_token'); localStorage.removeItem('klant_email');
-  sessionStorage.removeItem('klant_token'); sessionStorage.removeItem('klant_email');
-  showScreen('screen-klant-login');
+// uitnodigingSturen - altijd met wachtwoord
+async function uitnodigingSturen(carId){
+  var car=cars.find(function(c){return c.id===carId;});
+  if(!car||!car.klantEmail){toast('Geen e-mailadres bekend');return;}
+  var tempPw=Math.random().toString(36).slice(2,6).toUpperCase()+Math.random().toString(36).slice(2,5)+'1!';
+  var email=car.klantEmail.toLowerCase().trim();
+  try{await fetch(SUPA_URL+'/auth/v1/signup',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPA_KEY},body:JSON.stringify({email:email,password:tempPw})});}catch(e){}
+  var subj=encodeURIComponent('Uw toegang tot Mijn Select Car Lease');
+  var body=encodeURIComponent('Beste '+(car.klant||'klant')+',
+
+Uw leaseportaal staat klaar op:
+'+window.location.origin+'
+
+Inloggegevens:
+E-mail: '+email+'
+Wachtwoord: '+tempPw+'
+
+Met vriendelijke groet,
+Select Car Lease
+0348-467657');
+  window.location.href='mailto:'+email+'?subject='+subj+'&body='+body;
+  toast('Uitnodiging verstuurd naar '+email+'!');
 }
 
-// Override uitnodigingSturen - altijd met wachtwoord
-async function uitnodigingSturen(carId) {
-  var car = cars.find(function(c){return c.id===carId;});
-  if (!car||!car.klantEmail) { toast('Geen e-mailadres bekend'); return; }
-  var tempPw = Math.random().toString(36).slice(2,6).toUpperCase()+Math.random().toString(36).slice(2,5)+'1!';
-  var email = car.klantEmail.toLowerCase().trim();
-  try { await fetch(SUPA_URL+'/auth/v1/signup',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPA_KEY},body:JSON.stringify({email:email,password:tempPw})}); } catch(e) {}
-  var subj = encodeURIComponent('Uw toegang tot Mijn Select Car Lease');
-  var body = encodeURIComponent('Beste '+(car.klant||'klant')+', uw leaseportaal: '+window.location.origin+'. E-mail: '+email+'. Wachtwoord: '+tempPw+'. Met vr. groet, Select Car Lease 0348-467657');
-  window.location.href = 'mailto:'+email+'?subject='+subj+'&body='+body;
-  toast('Uitnodiging verstuurd!');
-}
+// resetKlantWachtwoord
+async function resetKlantWachtwoord(carId){
+  var car=cars.find(function(c){return c.id===carId;});
+  if(!car||!car.klantEmail){toast('Geen e-mailadres bekend');return;}
+  var tempPw=Math.random().toString(36).slice(2,6).toUpperCase()+Math.random().toString(36).slice(2,5)+'1!';
+  var email=car.klantEmail.toLowerCase().trim();
+  try{await fetch(SUPA_URL+'/auth/v1/signup',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPA_KEY},body:JSON.stringify({email:email,password:tempPw})});}catch(e){}
+  var subj=encodeURIComponent('Nieuw wachtwoord Mijn Select Car Lease');
+  var body=encodeURIComponent('Beste '+(car.klant||'klant')+',
 
-// Override resetKlantWachtwoord
-async function resetKlantWachtwoord(carId) {
-  var car = cars.find(function(c){return c.id===carId;});
-  if (!car||!car.klantEmail) { toast('Geen e-mailadres bekend'); return; }
-  var tempPw = Math.random().toString(36).slice(2,6).toUpperCase()+Math.random().toString(36).slice(2,5)+'1!';
-  var email = car.klantEmail.toLowerCase().trim();
-  try { await fetch(SUPA_URL+'/auth/v1/signup',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPA_KEY},body:JSON.stringify({email:email,password:tempPw})}); } catch(e) {}
-  var subj = encodeURIComponent('Nieuw wachtwoord Mijn Select Car Lease');
-  var body = encodeURIComponent('Beste '+(car.klant||'klant')+', nieuw wachtwoord: '+tempPw+'. Inloggen: '+window.location.origin+'. E-mail: '+email);
-  window.location.href = 'mailto:'+email+'?subject='+subj+'&body='+body;
+Uw nieuwe wachtwoord:
+'+tempPw+'
+
+Inloggen via:
+'+window.location.origin+'
+E-mail: '+email+'
+
+Met vriendelijke groet, Select Car Lease');
+  window.location.href='mailto:'+email+'?subject='+subj+'&body='+body;
   toast('Nieuw wachtwoord verstuurd!');
 }
 
