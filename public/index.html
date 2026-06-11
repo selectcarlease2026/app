@@ -2441,3 +2441,45 @@ setTimeout(() => {
 </script>
 </body>
 </html>
+function showScreen(id) {
+  document.querySelectorAll('.screen,.success-page').forEach(function(s){
+    s.classList.remove('active'); s.style.display='none';
+  });
+  var el = document.getElementById(id);
+  if (el) { el.classList.add('active'); el.style.display='flex'; el.style.flexDirection='column'; }
+  window.scrollTo(0,0);
+}
+
+function showAppScreen(id) {
+  document.querySelectorAll('.screen,.success-page').forEach(function(s){
+    s.classList.remove('active'); s.style.display='none';
+  });
+  var el = document.getElementById(id);
+  if (el) { el.classList.add('active'); el.style.display='flex'; el.style.flexDirection='column'; }
+  window.scrollTo(0,0);
+}
+
+function backToAdmin() {
+  var backBtn = document.getElementById('back-to-admin-btn');
+  if (backBtn) backBtn.style.display = 'none';
+  var logoutBtn = document.getElementById('klant-logout-btn');
+  if (logoutBtn) logoutBtn.style.display = 'inline-flex';
+  showScreen('screen-admin');
+}
+
+function fmtDate(d) {
+  if (!d) return '-';
+  var dt = new Date(d);
+  if (isNaN(dt)) return d;
+  return dt.toLocaleDateString('nl-NL', {day:'2-digit', month:'2-digit', year:'numeric'});
+}
+
+function toast(msg) {
+  var t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 3000);
+}
+
+
