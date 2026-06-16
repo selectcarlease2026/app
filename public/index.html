@@ -3439,22 +3439,21 @@ async function resetKlantWachtwoord(carId){
   toast('Nieuw wachtwoord verstuurd!');
 }
 
-// resetKlantWachtwoord - stuurt Supabase reset link + mail met tijdelijk wachtwoord
+// resetKlantWachtwoord - via beveiligde worker
 async function resetKlantWachtwoord(carId){
   var car=cars.find(function(c){return c.id===carId;});
   if(!car||!car.klantEmail){toast('Geen e-mailadres bekend');return;}
   var email=car.klantEmail.toLowerCase().trim();
-  // Probeer eerst delete + recreate (werkt als account bestaat)
   var tempPw=Math.random().toString(36).slice(2,6).toUpperCase()+Math.random().toString(36).slice(2,5)+'1!';
-  // Stuur Supabase recover email
   try{
-    await fetch(SUPA_URL+'/auth/v1/recover',{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPA_KEY},body:JSON.stringify({email:email})});
-  }catch(e){}
-  // Stuur ook een uitnodigingsmail met tijdelijk wachtwoord als fallback
-  var subj=encodeURIComponent('Wachtwoord reset Mijn Select Car Lease');
-  var body=encodeURIComponent('Beste '+(car.klant||'klant')+', gebruik de reset link die Supabase naar u stuurt, OF vraag uw beheerder om een nieuwe uitnodiging. Inloggen via: '+window.location.origin+'. E-mail: '+email+'. Bij vragen: 0348-467657');
+    var res=await fetch('/api/admin/upsert-user',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,password:tempPw})});
+    var data=await res.json();
+    console.log('Reset:', data.action, email);
+  }catch(e){console.warn('Worker fout:',e);}
+  var subj=encodeURIComponent('Nieuw wachtwoord Mijn Select Car Lease');
+  var body=encodeURIComponent('Beste '+(car.klant||'klant')+', uw nieuwe wachtwoord: '+tempPw+'. Inloggen via: '+window.location.origin+'. E-mail: '+email+'. Met vr. groet, Select Car Lease 0348-467657');
   window.location.href='mailto:'+email+'?subject='+subj+'&body='+body;
-  toast('Reset link verstuurd naar '+email);
+  toast('Nieuw wachtwoord verstuurd naar '+email+'!');
 }
 </script>
 </body>
